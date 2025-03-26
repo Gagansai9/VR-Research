@@ -11,9 +11,10 @@
     <style>
       /* Style for the custom Enter VR button */
       .enter-vr-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         padding: 10px 20px;
         background-color: #007bff;
         color: #fff;
@@ -23,18 +24,30 @@
         z-index: 1000;
         cursor: pointer;
       }
+      /* Style for the project description */
+      .project-description {
+        text-align: center;
+        margin: 20px;
+        font-size: 18px;
+      }
     </style>
   </head>
   <body>
+    <div class="project-description">
+      <h1>360° VR Video Experience</h1>
+      <p>This project showcases a 360° VR video experience using A-Frame. Enjoy the immersive view of the video below!</p>
+      <p>Video: A thrilling ride on the world's longest wooden roller coaster!</p>
+    </div>
+
     <!-- Custom VR Enter Button -->
     <button class="enter-vr-btn" onclick="enterVRMode()">Enter VR Mode</button>
 
     <!-- A-Frame Scene -->
-    <a-scene id="scene" vr-mode-ui="enabled: true">
+    <a-scene id="scene" vr-mode-ui="enabled: true" embedded>
       <!-- Wrap the 360° video onto a sphere -->
       <a-videosphere 
          id="videoSphere" 
-src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" 
+         src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" 
          rotation="0 -90 0">
       </a-videosphere>
 

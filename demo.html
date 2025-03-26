@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>360° VR Video Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Include A-Frame library -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- Optional: Include a WebXR polyfill for broader compatibility -->
+    <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    <style>
+      /* Style for the custom Enter VR button */
+      .enter-vr-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        z-index: 1000;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom VR Enter Button -->
+    <button class="enter-vr-btn" onclick="enterVRMode()">Enter VR Mode</button>
+
+    <!-- A-Frame Scene -->
+    <a-scene id="scene" vr-mode-ui="enabled: true">
+      <!-- Wrap the 360° video onto a sphere -->
+      <a-videosphere 
+         id="videoSphere" 
+         src="C:\Users\gagan\Videos\4K Video Downloader+\VR 360 The Beast World's Longest Wooden Roller Coaster POV Kings Island Ohio.mp4" 
+         rotation="0 -90 0">
+      </a-videosphere>
+
+      <!-- A basic camera with look-controls for mobile VR -->
+      <a-entity camera look-controls position="0 1.6 0"></a-entity>
+    </a-scene>
+
+    <script>
+      // Function to force the scene into VR mode
+      function enterVRMode() {
+        var sceneEl = document.getElementById('scene');
+        // Check if the scene supports entering VR mode
+        if (sceneEl.enterVR) {
+          sceneEl.enterVR();
+        } else {
+          alert('VR mode is not supported on this browser. Please use a compatible mobile browser (e.g., Chrome for Android) that supports WebXR.');
+        }
+      }
+    </script>
+  </body>
+</html>

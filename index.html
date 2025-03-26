@@ -2,49 +2,92 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>360 Video Player</title>
-    <!-- Include A-Frame library -->
+    <!-- A-Frame library for 360-degree video and VR support -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            background: #000; /* Black background to avoid white flash */
         }
         .a-canvas {
             height: 100vh;
             width: 100vw;
         }
+        #error-message {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <a-scene vr-mode-ui="enabled: true">
-        <!-- 360 Video Sphere -->
+    <!-- Error message display -->
+    <div id="error-message"></div>
+
+    <!-- A-Frame scene -->
+    <a-scene vr-mode-ui="enabled: true" embedded>
+        <!-- 360-degree video sphere -->
         <a-videosphere
+            id="videoSphere"
             src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
-            rotation="0 180 0"
+            rotation="0 180 0" <!-- Rotates video 180 degrees to correct orientation -->
             autoplay="true"
             loop="true"
             crossOrigin="anonymous">
         </a-videosphere>
 
-        <!-- Camera -->
+        <!-- Camera for user viewpoint -->
         <a-entity camera look-controls position="0 0 0"></a-entity>
     </a-scene>
 
+    <!-- JavaScript for mobile VR and error handling -->
     <script>
         // Check if device is mobile
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
-        // Enable VR mode automatically on mobile devices
-        window.onload = function() {
-            if (isMobile()) {
-                const scene = document.querySelector('a-scene');
-                scene.enterVR();
-            }
-        }
+        // Load event handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoSphere = document.querySelector('#videoSphere');
+            const errorMessage = document.querySelector('#error-message');
+            const videoElement = videoSphere.components.material.material.map.image;
+
+            // Video load success
+            videoElement.addEventListener('loadeddata', () => {
+                console.log('Video loaded successfully');
+                if (isMobile()) {
+                    const scene = document.querySelector('a-scene');
+                    scene.enterVR(); // Auto-enter VR mode on mobile
+                }
+            });
+
+            // Video load error
+            videoElement.addEventListener('error', (e) => {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Error loading video';
+                console.error('Video loading error:', e);
+            });
+
+            // Handle autoplay restrictions
+            videoElement.addEventListener('canplay', () => {
+                videoElement.play().catch(() => {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Tap screen to start video';
+                    document.body.addEventListener('touchstart', function startVideo() {
+                        videoElement.play();
+                        document.body.removeEventListener('touchstart', startVideo);
+                        errorMessage.style.display = 'none';
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>

@@ -3,54 +3,113 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>360 Video Player</title>
+    <title>VR Video Experience</title>
     <!-- A-Frame library for 360-degree video and VR support -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
         body {
             margin: 0;
+            font-family: Arial, sans-serif;
+            background: #1e3a8a; /* Deep blue background for a clean look */
+            color: #fff;
             overflow: hidden;
-            background: #000; /* Black background to avoid white flash */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
+
+        /* Simple UI for non-VR mode (desktop or initial mobile view) */
+        .ui-container {
+            text-align: center;
+            z-index: 1000;
+            position: absolute;
+            top: 20%;
+            width: 100%;
+        }
+
+        .ui-container h1 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .ui-container button {
+            background: #a78bfa; /* Purple button */
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s;
+        }
+
+        .ui-container button:hover {
+            background: #8b5cf6; /* Slightly darker purple on hover */
+        }
+
+        /* VR Scene */
         .a-canvas {
             height: 100vh;
             width: 100vw;
         }
+
+        /* Error Message */
         #error-message {
             position: absolute;
             top: 20px;
             left: 20px;
-            color: white;
-            z-index: 1000;
+            color: #fff;
+            z-index: 1001;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* Hide UI when in VR mode */
+        .vr-mode .ui-container {
             display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Error message display -->
+    <!-- Simple UI -->
+    <div class="ui-container">
+        <h1>VR Video Experience</h1>
+        <button onclick="startVR()">Enter VR Mode</button>
+    </div>
+
+    <!-- Error Message -->
     <div id="error-message"></div>
 
-    <!-- A-Frame scene -->
+    <!-- VR Scene -->
     <a-scene vr-mode-ui="enabled: true" embedded>
-        <!-- 360-degree video sphere -->
         <a-videosphere
             id="videoSphere"
             src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
-            rotation="0 180 0" <!-- Rotates video 180 degrees to correct orientation -->
+            rotation="0 180 0"
             autoplay="true"
             loop="true"
             crossOrigin="anonymous">
         </a-videosphere>
-
-        <!-- Camera for user viewpoint -->
         <a-entity camera look-controls position="0 0 0"></a-entity>
     </a-scene>
 
-    <!-- JavaScript for mobile VR and error handling -->
     <script>
         // Check if device is mobile
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // Start VR mode
+        function startVR() {
+            const scene = document.querySelector('a-scene');
+            scene.enterVR();
+            document.body.classList.add('vr-mode'); // Hide UI in VR mode
         }
 
         // Load event handling
@@ -62,9 +121,9 @@
             // Video load success
             videoElement.addEventListener('loadeddata', () => {
                 console.log('Video loaded successfully');
+                // Auto-enter VR mode on mobile
                 if (isMobile()) {
-                    const scene = document.querySelector('a-scene');
-                    scene.enterVR(); // Auto-enter VR mode on mobile
+                    startVR();
                 }
             });
 
@@ -84,6 +143,9 @@
                         videoElement.play();
                         document.body.removeEventListener('touchstart', startVideo);
                         errorMessage.style.display = 'none';
+                        if (isMobile()) {
+                            startVR();
+                        }
                     });
                 });
             });

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>VR Video Experience</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
         body {
@@ -73,7 +74,7 @@
     <a-scene vr-mode-ui="enabled: true" embedded>
         <a-videosphere
             id="videoSphere"
-            src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
+            src = "https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
             rotation="0 180 0"
             autoplay="true"
             loop="true"
@@ -108,10 +109,8 @@
                 return;
             }
 
-            // Wait for the A-Frame scene to load
             const scene = document.querySelector('a-scene');
             scene.addEventListener('loaded', () => {
-                // Wait for the videosphere component to load
                 videoSphere.addEventListener('loaded', () => {
                     const videoElement = videoSphere.components.material?.material?.map?.image;
 

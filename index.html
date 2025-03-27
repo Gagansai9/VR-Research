@@ -89,41 +89,65 @@
 
         function startVR() {
             const scene = document.querySelector('a-scene');
-            scene.enterVR();
-            document.body.classList.add('vr-mode');
+            if (scene) {
+                scene.enterVR();
+                document.body.classList.add('vr-mode');
+            } else {
+                console.error('A-Frame scene not found');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             const videoSphere = document.querySelector('#videoSphere');
             const errorMessage = document.querySelector('#error-message');
 
-            videoSphere.addEventListener('loaded', () => {
-                const videoElement = videoSphere.components.material.material.map.image;
+            if (!videoSphere) {
+                console.error('Video sphere element not found');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Error: Video sphere not found';
+                return;
+            }
 
-                videoElement.addEventListener('loadeddata', () => {
-                    console.log('Video loaded successfully');
-                    if (isMobile()) {
-                        startVR();
-                    }
-                });
+            // Wait for the A-Frame scene to load
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('loaded', () => {
+                // Wait for the videosphere component to load
+                videoSphere.addEventListener('loaded', () => {
+                    const videoElement = videoSphere.components.material?.material?.map?.image;
 
-                videoElement.addEventListener('error', (e) => {
-                    errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Error loading video';
-                    console.error('Video loading error:', e);
-                });
-
-                videoElement.addEventListener('canplay', () => {
-                    videoElement.play().catch(() => {
+                    if (!videoElement) {
+                        console.error('Video element not found in videosphere');
                         errorMessage.style.display = 'block';
-                        errorMessage.textContent = 'Tap screen to start video';
-                        document.body.addEventListener('touchstart', function startVideo() {
-                            videoElement.play();
-                            document.body.removeEventListener('touchstart', startVideo);
-                            errorMessage.style.display = 'none';
-                            if (isMobile()) {
-                                startVR();
-                            }
+                        errorMessage.textContent = 'Error: Video element not found';
+                        return;
+                    }
+
+                    videoElement.addEventListener('loadeddata', () => {
+                        console.log('Video loaded successfully');
+                        if (isMobile()) {
+                            startVR();
+                        }
+                    });
+
+                    videoElement.addEventListener('error', (e) => {
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Error loading video: ' + (e.message || 'Unknown error');
+                        console.error('Video loading error:', e);
+                    });
+
+                    videoElement.addEventListener('canplay', () => {
+                        videoElement.play().catch((err) => {
+                            errorMessage.style.display = 'block';
+                            errorMessage.textContent = 'Tap screen to start video';
+                            console.error('Autoplay failed:', err);
+                            document.body.addEventListener('touchstart', function startVideo() {
+                                videoElement.play();
+                                document.body.removeEventListener('touchstart', startVideo);
+                                errorMessage.style.display = 'none';
+                                if (isMobile()) {
+                                    startVR();
+                                }
+                            });
                         });
                     });
                 });

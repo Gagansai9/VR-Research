@@ -1,28 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
 </head>
 <body>
     <h1>CORS Test</h1>
-    <p>Check the console for CORS headers.</p>
+    <p>Testing CORS headers for the video file. Check the console for details.</p>
+    <div id="result"></div>
+
     <script>
-        fetch('https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4', {
-            method: 'GET',
-            mode: 'cors'
-        })
-        .then(response => {
-            console.log('CORS Headers:', response.headers.get('Access-Control-Allow-Origin'));
-            if (response.headers.get('Access-Control-Allow-Origin') === '*') {
-                console.log('CORS is working correctly!');
-            } else {
-                console.log('CORS is not set up correctly.');
+        // Function to update the result on the page
+        function updateResult(message, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = isSuccess ? 'success' : 'error';
+        }
+
+        // Test CORS headers
+        (async () => {
+            try {
+                const response = await fetch('https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World\'s%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+                console.log('CORS Headers:', corsHeader);
+
+                if (corsHeader === '*') {
+                    console.log('CORS is working correctly!');
+                    updateResult('CORS is working correctly! The video should load on your webpage.', true);
+                } else {
+                    console.log('CORS is not set up correctly.');
+                    updateResult('CORS is not set up correctly. The video may not load on your webpage.', false);
+                }
+
+                // Optional: Log the response status
+                console.log('Response Status:', response.status);
+            } catch (error) {
+                console.error('CORS Error:', error);
+                updateResult('CORS Error: ' + error.message, false);
             }
-            return response.blob();
-        })
-        .catch(error => {
-            console.error('CORS Error:', error);
-        });
+        })();
     </script>
 </body>
 </html>

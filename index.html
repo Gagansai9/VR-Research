@@ -29,7 +29,7 @@
         .ui-container h1 {
             font-size: 1.5em;
             margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
         }
         .ui-container button {
             background: #a78bfa;
@@ -39,11 +39,14 @@
             border-radius: 10px;
             font-size: 1.2em;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 8px rgb(0 0 0 / 30%);
             transition: background 0.3s;
         }
-        .ui-container button:hover {
-            background: #8b5cf6;
+        .ui-container button:not(:last-child) {
+            margin-bottom: 10px;
+        }
+        .ui-container button:nth-child(2) {
+            margin-top: 10px;
         }
         .a-canvas {
             height: 100vh;
@@ -56,25 +59,28 @@
             color: #fff;
             z-index: 1001;
             display: none;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgb(0 0 0 / 70%);
             padding: 10px;
             border-radius: 5px;
         }
-        .vr-mode .ui-container {
+        /* Commented out to keep UI visible in VR mode */
+        /* .vr-mode .ui-container {
             display: none;
-        }
+        } */
     </style>
 </head>
 <body>
     <div class="ui-container">
         <h1>VR Video Experience</h1>
         <button onclick="startVR()">Enter VR Mode</button>
+        <button id="playPauseButton">Play/Pause Video</button>
+        <button id="recenterButton">Recenter VR</button>
     </div>
     <div id="error-message"></div>
     <a-scene vr-mode-ui="enabled: true" embedded>
         <a-videosphere
             id="videoSphere"
-            src="https://storage.googleapis.com/vrvideo1/video1/test-video.mp4"
+            src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
             rotation="0 180 0"
             autoplay="true"
             loop="true"
@@ -98,6 +104,8 @@
             }
         }
 
+        var videoElement;
+
         document.addEventListener('DOMContentLoaded', () => {
             const videoSphere = document.querySelector('#videoSphere');
             const errorMessage = document.querySelector('#error-message');
@@ -112,7 +120,7 @@
             const scene = document.querySelector('a-scene');
             scene.addEventListener('loaded', () => {
                 videoSphere.addEventListener('loaded', () => {
-                    const videoElement = videoSphere.components.material?.material?.map?.image;
+                    videoElement = videoSphere.components.material?.material?.map?.image;
 
                     if (!videoElement) {
                         console.error('Video element not found in videosphere');
@@ -121,6 +129,50 @@
                         return;
                     }
 
+                    // Set up play/pause button
+                    var playPauseButton = document.getElementById('playPauseButton');
+
+                    function updateButtonState() {
+                        if (videoElement.paused) {
+                            playPauseButton.textContent = 'Play Video';
+                        } else {
+                            playPauseButton.textContent = 'Pause Video';
+                        }
+                    }
+
+                    // Attach event listeners to the video element
+                    videoElement.addEventListener('play', updateButtonState);
+                    videoElement.addEventListener('pause', updateButtonState);
+
+                    // Initial state
+                    updateButtonState();
+
+                    // Button click handler
+                    playPauseButton.addEventListener('click', function() {
+                        if (videoElement.paused) {
+                            videoElement.play();
+                        } else {
+                            videoElement.pause();
+                        }
+                    });
+
+                    // Set up recenter button
+                    var recenterButton = document.getElementById('recenterButton');
+
+                    // Recenter button click handler
+                    recenterButton.addEventListener('click', function() {
+                        const camera = document.querySelector('a-entity[camera]');
+                        if (camera) {
+                            // Reset the camera's rotation to face forward (0, 0, 0)
+                            camera.setAttribute('look-controls', 'enabled: false');
+                            camera.setAttribute('rotation', '0 0 0');
+                            camera.setAttribute('look-controls', 'enabled: true');
+                        } else {
+                            console.error('Camera entity not found');
+                        }
+                    });
+
+                    // Video loaded successfully
                     videoElement.addEventListener('loadeddata', () => {
                         console.log('Video loaded successfully');
                         if (isMobile()) {
@@ -128,12 +180,14 @@
                         }
                     });
 
+                    // Video load error
                     videoElement.addEventListener('error', (e) => {
                         errorMessage.style.display = 'block';
                         errorMessage.textContent = 'Error loading video: ' + (e.message || 'Unknown error');
                         console.error('Video loading error:', e);
                     });
 
+                    // Handle autoplay restrictions
                     videoElement.addEventListener('canplay', () => {
                         videoElement.play().catch((err) => {
                             errorMessage.style.display = 'block';

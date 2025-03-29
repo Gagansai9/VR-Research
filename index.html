@@ -76,6 +76,8 @@
         #videoElement.hidden {
             position: absolute;
             left: -9999px;
+            width: 1px;
+            height: 1px;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -238,8 +240,10 @@
 
             // Ensure video resumes in VR mode
             videoElement.addEventListener('pause', () => {
-                if (document.body.classList.contains('vr-mode') && !videoElement.paused) {
-                    videoElement.play();
+                if (document.body.classList.contains('vr-mode') && videoElement.paused) {
+                    videoElement.play().catch((err) => {
+                        console.error('Failed to resume video in VR mode:', err);
+                    });
                 }
             });
         });

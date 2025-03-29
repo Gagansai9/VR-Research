@@ -9,8 +9,8 @@
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #1e3a8a;
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2b6cb0 100%);
             color: #fff;
             overflow: hidden;
             height: 100vh;
@@ -22,14 +22,25 @@
         #initialUI {
             text-align: center;
             z-index: 1000;
-            position: absolute;
-            top: 20%;
             width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
         #initialUI h1 {
-            font-size: 1.5em;
+            font-size: 2em;
             margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        #initialUI video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
         }
         #initialUI button {
             background: #a78bfa;
@@ -39,15 +50,12 @@
             border-radius: 10px;
             font-size: 1.2em;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgb(0 0 0 / 30%);
-            transition: background 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s, transform 0.1s;
         }
         #initialUI button:hover {
             background: #8b5cf6;
-        }
-        #initialUI video {
-            width: 300px;
-            height: 150px;
+            transform: scale(1.05);
         }
         .a-canvas {
             height: 100vh;
@@ -63,17 +71,19 @@
             background: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
+            font-size: 0.9em;
         }
         #videoElement.hidden {
             position: absolute;
             left: -9999px;
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="initialUI">
         <h1>VR Video Experience</h1>
-        <video id="videoElement" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" width="300" height="150" controls></video>
+        <video id="videoElement" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" controls></video>
         <button id="enterVRButton" onclick="enterVRMode()">Enter VR Mode</button>
     </div>
     <a-scene id="vrScene" style="display: none;" vr-mode-ui="enabled: true" embedded>
@@ -83,15 +93,15 @@
             <a-entity id="controlsPanel" position="0 0 -4" visible="false">
                 <a-plane id="playPauseButton" class="clickable" position="0 0.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
                     event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Play/Pause Video" align="center" color="white" font="arial" position="0 0 0.1"></a-text>
+                    <a-text value="Play/Pause Video" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
                 </a-plane>
                 <a-plane id="recenterButton" class="clickable" position="0 -0.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
                     event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Recenter VR" align="center" color="white" font="arial" position="0 0 0.1"></a-text>
+                    <a-text value="Recenter VR" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
                 </a-plane>
                 <a-plane id="toggleControlsButton" class="clickable" position="0 -1.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
                     event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Hide Controls" align="center" color="white" font="arial" position="0 0 0.1"></a-text>
+                    <a-text value="Hide Controls" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
                 </a-plane>
             </a-entity>
         </a-entity>
@@ -113,12 +123,12 @@
             if (scene) {
                 scene.enterVR();
                 document.body.classList.add('vr-mode');
-                if (videoElement.readyState >= 3) {
-                    videoElement.play();
-                } else {
-                    videoElement.addEventListener('canplay', function startPlayback() {
-                        videoElement.play();
-                        videoElement.removeEventListener('canplay', startPlayback);
+                // Ensure video plays in VR mode
+                if (videoElement.paused) {
+                    videoElement.play().catch((err) => {
+                        console.error('Playback failed in VR mode:', err);
+                        document.getElementById('error-message').style.display = 'block';
+                        document.getElementById('error-message').textContent = 'Tap screen to start video in VR';
                     });
                 }
             } else {
@@ -224,6 +234,13 @@
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = 'Error loading video: ' + (e.message || 'Unknown error');
                 console.error('Video loading error:', e);
+            });
+
+            // Ensure video resumes in VR mode
+            videoElement.addEventListener('pause', () => {
+                if (document.body.classList.contains('vr-mode') && !videoElement.paused) {
+                    videoElement.play();
+                }
             });
         });
     </script>

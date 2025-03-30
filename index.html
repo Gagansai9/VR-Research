@@ -320,419 +320,138 @@
             }
         }
         .vr-interface {
-            display: none;
             position: fixed;
             width: 100%;
             height: 100%;
             pointer-events: none;
             z-index: 9999;
+            display: none;
         }
-        .vr-title {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 16px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 16px;
-            border-radius: 20px;
-            text-align: center;
-            white-space: nowrap;
+        .vr-interface.visible {
+            display: block;
         }
-        .vr-controls {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
+        .vr-controls-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.7) 70%, transparent);
+            padding: 40px 20px 20px;
             display: flex;
-            gap: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 20px;
-            border-radius: 30px;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
             pointer-events: auto;
             opacity: 0;
             transition: opacity 0.3s;
-        }
-        .vr-controls.visible {
-            opacity: 1;
-        }
-        .vr-button {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            padding: 10px;
-            cursor: pointer;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-        .vr-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .vr-progress {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            pointer-events: auto;
-        }
-        .vr-progress-fill {
-            height: 100%;
-            background: #fff;
-            border-radius: 2px;
-            width: 0%;
-        }
-        .vr-time {
-            position: absolute;
-            bottom: 30px;
-            right: 20px;
-            color: #fff;
-            font-size: 14px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .vr-ui-container {
-            display: none;
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-        }
-        .vr-controls-panel {
-            position: absolute;
-            left: 50%;
-            bottom: 10%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 20px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            pointer-events: auto;
-            min-width: 300px;
-        }
-        .vr-button-group {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-        .vr-button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-        .vr-button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        .vr-progress-container {
-            width: 100%;
-            padding: 0 15px;
-        }
-        .vr-progress-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            position: relative;
-            cursor: pointer;
-        }
-        .vr-progress-fill {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: #fff;
-            border-radius: 2px;
-        }
-        .vr-time-display {
-            color: white;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 5px;
-        }
-        .vr-title {
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            margin-bottom: 10px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 90%;
-        }
-        .vr-ui {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            pointer-events: none;
-        }
-        .vr-exit-button {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             z-index: 10000;
         }
-        .vr-menu-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            border-radius: 50%;
+        .video-title {
             color: white;
-            font-size: 24px;
-            cursor: pointer;
-            pointer-events: auto;
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            text-align: center;
+            max-width: 80%;
+        }
+        .controls-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-        }
-        .vr-controls {
-            display: none;
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 20px;
-            pointer-events: auto;
-        }
-        .vr-controls.visible {
-            display: flex;
             gap: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
         }
-        .vr-control-button {
-            width: 50px;
-            height: 50px;
+        .vr-button {
+            width: 44px;
+            height: 44px;
             border: none;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            font-size: 24px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
         }
-        .vr-progress {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 4px;
+        .vr-button i {
+            font-size: 24px;
+        }
+        .vr-button:hover, .vr-button.hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        .vr-progress-container {
+            flex: 1;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .vr-progress-bar {
+            width: 100%;
+            height: 3px;
             background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            pointer-events: auto;
+            border-radius: 1.5px;
+            cursor: pointer;
+            position: relative;
         }
         .vr-progress-fill {
             height: 100%;
-            background: white;
-            border-radius: 2px;
-            width: 0;
+            background: #ff0000;
+            border-radius: 1.5px;
+            transition: width 0.1s;
+        }
+        .time-quality {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
         }
         .vr-cursor {
-            display: none;
             position: fixed;
             top: 50%;
             left: 50%;
-            width: 20px;
-            height: 20px;
-            border: 2px solid white;
+            width: 8px;
+            height: 8px;
+            background: white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            z-index: 10001;
+            z-index: 10000;
+            transition: all 0.2s;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
         }
-        .vr-cursor.visible {
-            display: block;
+        .vr-cursor.hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            background: #ff0000;
         }
-        .vr-controls-container {
+        .top-controls {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 9999;
-            pointer-events: none;
-        }
-        .vr-controls-container.visible {
-            display: block;
-        }
-        .vr-button {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid transparent;
-            color: white;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
-        }
-        .vr-button i {
-            font-size: 32px;
-            line-height: 1;
-        }
-        .vr-button:hover, .vr-button.hover {
-            border-color: #fff;
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        }
-        .vr-controls {
-            display: flex;
-            gap: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 30px;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        .vr-progress-container {
-            position: relative;
-            width: 300px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            cursor: pointer;
-            pointer-events: auto;
-            overflow: visible;
-        }
-        .vr-progress-container:hover .vr-progress-bar,
-        .vr-progress-container.hover .vr-progress-bar {
-            height: 6px;
-            background: #f00;
-        }
-        .vr-progress-container:hover::after,
-        .vr-progress-container.hover::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translate(50%, -50%);
-            width: 12px;
-            height: 12px;
-            background: #f00;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-        .vr-progress-bar {
-            position: absolute;
+            top: 0;
             left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 4px;
-            background: #f00;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-        .vr-time {
-            color: white;
-            font-size: 14px;
-            margin: 0 15px;
-            pointer-events: none;
-            font-family: 'Roboto', sans-serif;
-            letter-spacing: 0.5px;
-        }
-        .vr-title {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 16px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 12px 24px;
-            border-radius: 20px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            backdrop-filter: blur(5px);
-            font-family: 'Roboto', sans-serif;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        .vr-menu {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+            right: 0;
+            padding: 20px;
             display: flex;
-            gap: 10px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            justify-content: space-between;
+            pointer-events: auto;
         }
-        .vr-menu.visible {
-            opacity: 1;
-        }
-        .vr-menu-button {
+        .top-button {
             width: 40px;
             height: 40px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.7);
             border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
             color: white;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
+            transition: all 0.2s;
         }
-        .vr-menu-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-        .vr-menu-button i {
-            font-size: 24px;
+        .top-button:hover {
+            background: rgba(0, 0, 0, 0.7);
         }
     </style>
 </head>
@@ -777,40 +496,78 @@
         </a-entity>
     </a-scene>
 
-    <div id="vrControls" class="vr-controls">
-        <button class="vr-button clickable" id="playPauseBtn">
-            <i class="material-icons-round">play_arrow</i>
-        </button>
-        <button class="vr-button clickable" id="exitBtn">
-            <i class="material-icons-round">close</i>
-        </button>
+    <div id="vrInterface" class="vr-interface">
+        <div class="vr-cursor" id="vrCursor"></div>
+        
+        <div class="top-controls">
+            <button class="top-button clickable" id="exitBtn">
+                <i class="material-icons-round">close</i>
+            </button>
+            <button class="top-button clickable" id="settingsBtn">
+                <i class="material-icons-round">settings</i>
+            </button>
+        </div>
+
+        <div class="vr-controls-panel" id="vrControlsPanel">
+            <div class="video-title">3D 360 VR skydiving experience with the Vuze camera (4K)</div>
+            <div class="controls-row">
+                <button class="vr-button clickable" id="rewindBtn">
+                    <i class="material-icons-round">replay_10</i>
+                </button>
+                <button class="vr-button clickable" id="playPauseBtn">
+                    <i class="material-icons-round">play_arrow</i>
+                </button>
+                <button class="vr-button clickable" id="forwardBtn">
+                    <i class="material-icons-round">forward_10</i>
+                </button>
+                
+                <div class="vr-progress-container">
+                    <div class="vr-progress-bar clickable" id="progressBar">
+                        <div class="vr-progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-quality">
+                        <span id="timeDisplay">0:00 / 0:00</span>
+                        <span>Quality: Auto (1080p)</span>
+                    </div>
+                </div>
+
+                <button class="vr-button clickable" id="qualityBtn">
+                    <i class="material-icons-round">settings</i>
+                </button>
+                <button class="vr-button clickable" id="shareBtn">
+                    <i class="material-icons-round">share</i>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div id="error-message"></div>
 
     <script>
-        let vrVideo, vrScene, vrControls;
+        let vrVideo, vrScene, vrControls, vrInterface;
         let isVRMode = false;
         let isInitialized = false;
 
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            // Wait for A-Frame to be ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initialize);
-            } else {
-                initialize();
+        // Wait for everything to load
+        window.addEventListener('load', function() {
+            console.log('Page loaded, checking A-Frame...');
+            if (typeof AFRAME === 'undefined') {
+                showError('A-Frame failed to load');
+                return;
             }
+            initialize();
         });
 
         function initialize() {
             try {
-                // Get elements
+                console.log('Initializing components...');
+                
+                // Get all required elements
                 vrVideo = document.getElementById('vrVideo');
                 vrScene = document.getElementById('vrScene');
-                vrControls = document.getElementById('vrControls');
-
-                if (!vrVideo || !vrScene || !vrControls) {
+                vrInterface = document.getElementById('vrInterface');
+                
+                if (!vrVideo || !vrScene || !vrInterface) {
                     throw new Error('Required elements not found');
                 }
 
@@ -822,15 +579,7 @@
                 });
 
                 // Set up control buttons
-                const playPauseBtn = document.getElementById('playPauseBtn');
-                const exitBtn = document.getElementById('exitBtn');
-
-                if (playPauseBtn) {
-                    playPauseBtn.addEventListener('click', togglePlay);
-                }
-                if (exitBtn) {
-                    exitBtn.addEventListener('click', exitVR);
-                }
+                setupControlButtons();
 
                 // Check VR support
                 if (navigator.xr) {
@@ -853,6 +602,42 @@
             }
         }
 
+        function setupControlButtons() {
+            const buttons = {
+                playPause: document.getElementById('playPauseBtn'),
+                rewind: document.getElementById('rewindBtn'),
+                forward: document.getElementById('forwardBtn'),
+                exit: document.getElementById('exitBtn')
+            };
+
+            if (buttons.playPause) {
+                buttons.playPause.addEventListener('click', togglePlay);
+            }
+            if (buttons.rewind) {
+                buttons.rewind.addEventListener('click', () => {
+                    if (vrVideo) vrVideo.currentTime = Math.max(0, vrVideo.currentTime - 10);
+                });
+            }
+            if (buttons.forward) {
+                buttons.forward.addEventListener('click', () => {
+                    if (vrVideo) vrVideo.currentTime = Math.min(vrVideo.duration, vrVideo.currentTime + 10);
+                });
+            }
+            if (buttons.exit) {
+                buttons.exit.addEventListener('click', exitVR);
+            }
+
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.addEventListener('click', (event) => {
+                    if (!vrVideo) return;
+                    const rect = progressBar.getBoundingClientRect();
+                    const ratio = (event.clientX - rect.left) / rect.width;
+                    vrVideo.currentTime = ratio * vrVideo.duration;
+                });
+            }
+        }
+
         function enterVR() {
             if (!isInitialized) {
                 showError('Please wait for video to load');
@@ -863,16 +648,10 @@
                 document.querySelector('.initialUI').style.display = 'none';
                 vrScene.style.display = 'block';
 
-                // Ensure video is ready
-                if (vrVideo.readyState < 2) {
-                    showError('Video not ready. Please wait...');
-                    return;
-                }
-
                 vrScene.enterVR()
                     .then(() => {
                         isVRMode = true;
-                        vrControls.classList.add('visible');
+                        showVRInterface();
                         setupVRInteraction();
                     })
                     .catch(error => {
@@ -892,7 +671,7 @@
                 vrScene.exitVR()
                     .then(() => {
                         isVRMode = false;
-                        vrControls.classList.remove('visible');
+                        hideVRInterface();
                         if (vrVideo) {
                             vrVideo.pause();
                         }
@@ -909,6 +688,60 @@
             }
         }
 
+        function showVRInterface() {
+            if (vrInterface) {
+                vrInterface.classList.add('visible');
+                document.getElementById('vrCursor').classList.add('visible');
+                document.getElementById('vrControlsPanel').classList.add('visible');
+            }
+        }
+
+        function hideVRInterface() {
+            if (vrInterface) {
+                vrInterface.classList.remove('visible');
+                document.getElementById('vrCursor').classList.remove('visible');
+                document.getElementById('vrControlsPanel').classList.remove('visible');
+            }
+        }
+
+        function setupVRInteraction() {
+            const camera = document.getElementById('camera');
+            if (!camera) return;
+
+            function updateCursor() {
+                if (!isVRMode) return;
+
+                const cursor = document.getElementById('vrCursor');
+                const rotation = camera.getAttribute('rotation');
+                
+                if (cursor && rotation) {
+                    const x = (rotation.y / 180) * window.innerWidth + window.innerWidth / 2;
+                    const y = (-rotation.x / 180) * window.innerHeight + window.innerHeight / 2;
+                    
+                    cursor.style.left = `${x}px`;
+                    cursor.style.top = `${y}px`;
+
+                    const elements = document.elementsFromPoint(x, y);
+                    const hoverable = elements.find(el => el.classList.contains('clickable'));
+                    
+                    if (hoverable) {
+                        hoverable.classList.add('hover');
+                        cursor.classList.add('hover');
+                    } else {
+                        document.querySelectorAll('.hover').forEach(el => el.classList.remove('hover'));
+                        cursor.classList.remove('hover');
+                    }
+                }
+
+                if (isVRMode) {
+                    requestAnimationFrame(updateCursor);
+                }
+            }
+
+            updateCursor();
+            updateProgress();
+        }
+
         function togglePlay() {
             if (!vrVideo) return;
 
@@ -916,10 +749,8 @@
                 if (vrVideo.paused) {
                     vrVideo.play()
                         .then(() => {
-                            const playPauseIcon = document.querySelector('#playPauseBtn i');
-                            if (playPauseIcon) {
-                                playPauseIcon.textContent = 'pause';
-                            }
+                            const icon = document.querySelector('#playPauseBtn i');
+                            if (icon) icon.textContent = 'pause';
                         })
                         .catch(error => {
                             console.error('Error playing video:', error);
@@ -927,10 +758,8 @@
                         });
                 } else {
                     vrVideo.pause();
-                    const playPauseIcon = document.querySelector('#playPauseBtn i');
-                    if (playPauseIcon) {
-                        playPauseIcon.textContent = 'play_arrow';
-                    }
+                    const icon = document.querySelector('#playPauseBtn i');
+                    if (icon) icon.textContent = 'play_arrow';
                 }
             } catch (error) {
                 console.error('Error in togglePlay:', error);
@@ -938,39 +767,30 @@
             }
         }
 
-        function setupVRInteraction() {
-            try {
-                const camera = document.getElementById('camera');
-                if (!camera) return;
+        function updateProgress() {
+            if (!vrVideo) return;
 
-                let lastRotation = { x: 0, y: 0 };
-                let controlsTimeout;
+            const progressFill = document.getElementById('progressFill');
+            const timeDisplay = document.getElementById('timeDisplay');
 
-                function checkHeadMovement() {
-                    if (!camera || !isVRMode) return;
+            if (progressFill && timeDisplay) {
+                const progress = (vrVideo.currentTime / vrVideo.duration) * 100;
+                progressFill.style.width = `${progress}%`;
 
-                    const rotation = camera.getAttribute('rotation');
-                    if (!rotation) return;
-
-                    const movement = Math.abs(rotation.x - lastRotation.x) + 
-                                   Math.abs(rotation.y - lastRotation.y);
-
-                    if (movement > 1) {
-                        vrControls.classList.add('visible');
-                        clearTimeout(controlsTimeout);
-                        controlsTimeout = setTimeout(() => {
-                            vrControls.classList.remove('visible');
-                        }, 3000);
-                    }
-
-                    lastRotation = { ...rotation };
-                    requestAnimationFrame(checkHeadMovement);
-                }
-
-                checkHeadMovement();
-            } catch (error) {
-                console.error('Error in setupVRInteraction:', error);
+                const currentTime = formatTime(vrVideo.currentTime);
+                const duration = formatTime(vrVideo.duration);
+                timeDisplay.textContent = `${currentTime} / ${duration}`;
             }
+
+            if (isVRMode) {
+                requestAnimationFrame(updateProgress);
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
         function handleVideoError(event) {
@@ -987,6 +807,148 @@
                     errorElement.style.display = 'none';
                 }, 5000);
             }
+        }
+
+        function setupVRControls() {
+            const vrInterface = document.getElementById('vrInterface');
+            const vrControlsPanel = document.getElementById('vrControlsPanel');
+            const vrCursor = document.getElementById('vrCursor');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const rewindBtn = document.getElementById('rewindBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
+            const exitBtn = document.getElementById('exitBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const qualityBtn = document.getElementById('qualityBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const timeDisplay = document.getElementById('timeDisplay');
+            let controlsTimeout;
+
+            // Show interface on head movement
+            function showControls() {
+                vrControlsPanel.style.opacity = '1';
+                clearTimeout(controlsTimeout);
+                controlsTimeout = setTimeout(() => {
+                    if (!isHoveringControls) {
+                        vrControlsPanel.style.opacity = '0';
+                    }
+                }, 3000);
+            }
+
+            let isHoveringControls = false;
+            const clickableElements = document.querySelectorAll('.clickable');
+
+            // Handle hover states
+            function updateCursorHover(element) {
+                const rect = element.getBoundingClientRect();
+                const cursorX = window.innerWidth / 2;
+                const cursorY = window.innerHeight / 2;
+                
+                if (cursorX >= rect.left && cursorX <= rect.right &&
+                    cursorY >= rect.top && cursorY <= rect.bottom) {
+                    vrCursor.classList.add('hover');
+                    element.classList.add('hover');
+                    isHoveringControls = true;
+                    showControls();
+                    return true;
+                }
+                return false;
+            }
+
+            // Update cursor and hover states
+            function updateCursor() {
+                vrCursor.classList.remove('hover');
+                clickableElements.forEach(el => el.classList.remove('hover'));
+                isHoveringControls = false;
+
+                for (const element of clickableElements) {
+                    if (updateCursorHover(element)) {
+                        break;
+                    }
+                }
+            }
+
+            // Handle video controls
+            playPauseBtn.addEventListener('click', () => {
+                if (vrVideo.paused) {
+                    vrVideo.play();
+                    playPauseBtn.innerHTML = '<i class="material-icons-round">pause</i>';
+                } else {
+                    vrVideo.pause();
+                    playPauseBtn.innerHTML = '<i class="material-icons-round">play_arrow</i>';
+                }
+            });
+
+            rewindBtn.addEventListener('click', () => {
+                vrVideo.currentTime = Math.max(0, vrVideo.currentTime - 10);
+            });
+
+            forwardBtn.addEventListener('click', () => {
+                vrVideo.currentTime = Math.min(vrVideo.duration, vrVideo.currentTime + 10);
+            });
+
+            // Progress bar interaction
+            progressBar.addEventListener('click', (e) => {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                vrVideo.currentTime = pos * vrVideo.duration;
+            });
+
+            // Update progress and time
+            vrVideo.addEventListener('timeupdate', () => {
+                const progress = (vrVideo.currentTime / vrVideo.duration) * 100;
+                progressFill.style.width = `${progress}%`;
+                
+                const currentMinutes = Math.floor(vrVideo.currentTime / 60);
+                const currentSeconds = Math.floor(vrVideo.currentTime % 60);
+                const totalMinutes = Math.floor(vrVideo.duration / 60);
+                const totalSeconds = Math.floor(vrVideo.duration % 60);
+                
+                timeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+            });
+
+            // Exit VR mode
+            exitBtn.addEventListener('click', () => {
+                document.exitFullscreen();
+                vrScene.exitVR();
+            });
+
+            // Settings and quality controls (placeholder functionality)
+            settingsBtn.addEventListener('click', () => {
+                console.log('Settings clicked');
+            });
+
+            qualityBtn.addEventListener('click', () => {
+                console.log('Quality settings clicked');
+            });
+
+            shareBtn.addEventListener('click', () => {
+                console.log('Share clicked');
+            });
+
+            // Show/hide controls based on head movement
+            let lastRotation = { x: 0, y: 0 };
+            function checkHeadMovement() {
+                const camera = document.querySelector('a-camera');
+                const rotation = camera.getAttribute('rotation');
+                
+                const deltaX = Math.abs(rotation.x - lastRotation.x);
+                const deltaY = Math.abs(rotation.y - lastRotation.y);
+                
+                if (deltaX > 0.5 || deltaY > 0.5) {
+                    showControls();
+                }
+                
+                lastRotation = { ...rotation };
+                requestAnimationFrame(checkHeadMovement);
+            }
+
+            // Initialize
+            vrInterface.style.display = 'block';
+            showControls();
+            checkHeadMovement();
+            setInterval(updateCursor, 100);
         }
     </script>
 </body>

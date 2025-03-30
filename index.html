@@ -453,6 +453,44 @@
         .top-button:hover {
             background: rgba(0, 0, 0, 0.7);
         }
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 2000;
+        }
+        .loading-indicator.visible {
+            display: flex;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #ffffff;
+            border-top: 3px solid #a78bfa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-status {
+            color: #a78bfa;
+            margin-top: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -468,13 +506,20 @@
         <button onclick="enterVR()">Enter VR Mode</button>
     </div>
 
-    <a-scene id="vrScene" vr-mode-ui="enabled: false" embedded style="display: none;">
-        <a-assets timeout="10000">
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading VR Experience...</div>
+        <div class="loading-status" style="color: #a78bfa; margin-top: 10px; font-size: 14px;"></div>
+    </div>
+
+    <a-scene id="vrScene" vr-mode-ui="enabled: false" embedded style="display: none;" renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;">
+        <a-assets timeout="30000">
             <video id="vrVideo" 
                    src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
                    preload="auto"
                    crossorigin="anonymous"
-                   playsinline>
+                   playsinline
+                   webkit-playsinline>
             </video>
         </a-assets>
 
@@ -547,10 +592,15 @@
         let vrVideo, vrScene, vrControls, vrInterface;
         let isVRMode = false;
         let isInitialized = false;
+        let loadingIndicator, loadingStatus;
+        let loadingTimeout;
 
         // Wait for everything to load
         window.addEventListener('load', function() {
             console.log('Page loaded, checking A-Frame...');
+            loadingIndicator = document.getElementById('loadingIndicator');
+            loadingStatus = loadingIndicator.querySelector('.loading-status');
+            
             if (typeof AFRAME === 'undefined') {
                 showError('A-Frame failed to load');
                 return;
@@ -558,9 +608,99 @@
             initialize();
         });
 
+        function preloadVideo() {
+            return new Promise((resolve, reject) => {
+                if (!vrVideo) {
+                    reject(new Error('Video element not found'));
+                    return;
+                }
+
+                // Clear previous event listeners
+                vrVideo.removeEventListener('canplay', videoCanPlayHandler);
+                vrVideo.removeEventListener('error', videoErrorHandler);
+                
+                function videoCanPlayHandler() {
+                    console.log('Video can play event fired');
+                    clearTimeout(loadingTimeout);
+                    vrVideo.removeEventListener('canplay', videoCanPlayHandler);
+                    resolve();
+                }
+
+                function videoErrorHandler(error) {
+                    console.error('Video error:', error);
+                    clearTimeout(loadingTimeout);
+                    vrVideo.removeEventListener('error', videoErrorHandler);
+                    reject(new Error('Video failed to load: ' + (error.message || 'Unknown error')));
+                }
+
+                // Set up timeout
+                loadingTimeout = setTimeout(() => {
+                    vrVideo.removeEventListener('canplay', videoCanPlayHandler);
+                    vrVideo.removeEventListener('error', videoErrorHandler);
+                    reject(new Error('Video loading timed out'));
+                }, 30000);
+
+                // Add event listeners
+                vrVideo.addEventListener('canplay', videoCanPlayHandler);
+                vrVideo.addEventListener('error', videoErrorHandler);
+
+                // Force reload the video
+                vrVideo.load();
+            });
+        }
+
+        async function enterVR() {
+            try {
+                showLoading();
+                updateLoadingStatus('Preparing VR mode...');
+
+                // Check if video element exists
+                vrVideo = document.getElementById('vrVideo');
+                if (!vrVideo) {
+                    throw new Error('Video element not found');
+                }
+
+                // Hide UI and show VR scene
+                document.querySelector('.initialUI').style.display = 'none';
+                vrScene.style.display = 'block';
+
+                updateLoadingStatus('Loading video...');
+                await preloadVideo();
+                
+                updateLoadingStatus('Entering VR mode...');
+                await vrScene.enterVR();
+
+                isVRMode = true;
+                showVRInterface();
+                setupVRInteraction();
+                hideLoading();
+
+                // Start playing video after entering VR
+                try {
+                    await vrVideo.play();
+                    const playPauseBtn = document.querySelector('#playPauseBtn i');
+                    if (playPauseBtn) {
+                        playPauseBtn.textContent = 'pause';
+                    }
+                } catch (playError) {
+                    console.warn('Auto-play failed:', playError);
+                    // Don't throw here, just log warning
+                }
+
+            } catch (error) {
+                console.error('Error entering VR:', error);
+                showError(error.message || 'Failed to enter VR mode');
+                hideLoading();
+                // Reset UI
+                document.querySelector('.initialUI').style.display = 'block';
+                vrScene.style.display = 'none';
+            }
+        }
+
         function initialize() {
             try {
                 console.log('Initializing components...');
+                updateLoadingStatus('Initializing components...');
                 
                 // Get all required elements
                 vrVideo = document.getElementById('vrVideo');
@@ -571,15 +711,21 @@
                     throw new Error('Required elements not found');
                 }
 
+                // Preload video
+                vrVideo.preload = 'auto';
+                
                 // Set up video event listeners
-                vrVideo.addEventListener('error', handleVideoError);
                 vrVideo.addEventListener('loadedmetadata', () => {
-                    console.log('VR video metadata loaded');
+                    console.log('Video metadata loaded');
+                    updateLoadingStatus('Video metadata loaded');
                     isInitialized = true;
                 });
 
-                // Set up control buttons
-                setupControlButtons();
+                // Set up A-Frame scene loaded event
+                vrScene.addEventListener('loaded', () => {
+                    console.log('A-Frame scene loaded');
+                    updateLoadingStatus('VR scene ready');
+                });
 
                 // Check VR support
                 if (navigator.xr) {
@@ -587,18 +733,29 @@
                         .then(supported => {
                             if (!supported) {
                                 showError('VR not supported on this device');
+                            } else {
+                                updateLoadingStatus('VR support confirmed');
+                                // Try preloading video
+                                preloadVideo().catch(err => {
+                                    console.warn('Initial video preload failed:', err);
+                                    // Don't throw here, just log warning
+                                });
                             }
                         })
                         .catch(err => {
                             console.error('Error checking VR support:', err);
                             showError('Error checking VR support');
                         });
+                } else {
+                    showError('WebXR not available on this browser');
                 }
 
+                setupControlButtons();
                 console.log('Initialization successful');
+                updateLoadingStatus('Ready to enter VR');
             } catch (error) {
                 console.error('Initialization error:', error);
-                showError('Failed to initialize VR components');
+                showError('Failed to initialize: ' + error.message);
             }
         }
 
@@ -635,32 +792,6 @@
                     const ratio = (event.clientX - rect.left) / rect.width;
                     vrVideo.currentTime = ratio * vrVideo.duration;
                 });
-            }
-        }
-
-        function enterVR() {
-            if (!isInitialized) {
-                showError('Please wait for video to load');
-                return;
-            }
-
-            try {
-                document.querySelector('.initialUI').style.display = 'none';
-                vrScene.style.display = 'block';
-
-                vrScene.enterVR()
-                    .then(() => {
-                        isVRMode = true;
-                        showVRInterface();
-                        setupVRInteraction();
-                    })
-                    .catch(error => {
-                        console.error('Error entering VR:', error);
-                        showError('Failed to enter VR mode');
-                    });
-            } catch (error) {
-                console.error('Error in enterVR:', error);
-                showError('Failed to enter VR mode');
             }
         }
 
@@ -803,10 +934,13 @@
             if (errorElement) {
                 errorElement.textContent = message;
                 errorElement.style.display = 'block';
+                // Keep error visible longer for more serious issues
                 setTimeout(() => {
                     errorElement.style.display = 'none';
-                }, 5000);
+                }, 8000);
             }
+            console.error('Error:', message);
+            hideLoading();
         }
 
         function setupVRControls() {

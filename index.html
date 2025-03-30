@@ -208,29 +208,139 @@
         .clickable {
             cursor: pointer;
         }
+        .vr-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            width: auto;
+            min-width: 200px;
+            justify-content: center;
+        }
+        .vr-control-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .vr-control-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .vr-progress-bar {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 500px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            z-index: 1000;
+        }
+        .vr-progress-fill {
+            height: 100%;
+            background: #a78bfa;
+            border-radius: 2px;
+            width: 0%;
+        }
+        .vr-time-display {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 0.8em;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        .vr-volume-control {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+        .vr-volume-slider {
+            width: 4px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+        .vr-volume-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #a78bfa;
+            border-radius: 2px;
+            transition: height 0.3s;
+        }
+        @media (max-width: 768px) {
+            .vr-controls {
+                bottom: 10px;
+                padding: 10px;
+            }
+            .vr-progress-bar {
+                bottom: 60px;
+                width: 90%;
+            }
+            .vr-time-display {
+                bottom: 70px;
+            }
+            .vr-volume-control {
+                right: 10px;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="initialUI">
         <h1>VR Video Experience</h1>
-        <video id="smallVideoPlayer" 
+        <video id="videoPlayer" 
                src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" 
                controls 
-               preload="metadata">
+               preload="none"
+               onerror="handleVideoError(this)">
         </video>
         <button onclick="enterVRMode()">Enter VR Mode</button>
     </div>
     <a-scene id="vrScene" vr-mode-ui="enabled: true" embedded style="display: none;">
         <a-videosphere
             id="videoSphere"
-            src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
             rotation="0 180 0"
             autoplay="true"
             loop="true"
-            crossOrigin="anonymous"
-            preload="metadata">
+            crossOrigin="anonymous">
         </a-videosphere>
         <a-entity camera lookcontrols position="0 0 0"></a-entity>
+        <a-cursor color="#4CC3D9" fuse="false"></a-cursor>
         <div id="controlsPanel">
             <div class="controls-header">
                 <h3 class="controls-title">Video Controls</h3>
@@ -263,6 +373,28 @@
             <button class="quick-control-button" id="quickMute">🔊</button>
             <button class="quick-control-button" id="quickRecenter">🔄</button>
         </div>
+
+        <!-- VR Controls -->
+        <div class="vr-controls" id="vrControls">
+            <button class="vr-control-button" id="vrPlayPause">▶️ Play</button>
+            <button class="vr-control-button" id="vrMute">🔊</button>
+            <button class="vr-control-button" id="vrRecenter">🔄 Recenter</button>
+            <button class="vr-control-button" id="vrSpeed">1x</button>
+        </div>
+
+        <div class="vr-progress-bar" id="vrProgressBar">
+            <div class="vr-progress-fill" id="vrProgressFill"></div>
+        </div>
+
+        <div class="vr-time-display" id="vrTimeDisplay">
+            <span id="vrCurrentTime">0:00</span> / <span id="vrDuration">0:00</span>
+        </div>
+
+        <div class="vr-volume-control" id="vrVolumeControl">
+            <div class="vr-volume-slider" id="vrVolumeSlider">
+                <div class="vr-volume-fill" id="vrVolumeFill"></div>
+            </div>
+        </div>
     </a-scene>
     <div id="error-message"></div>
 
@@ -272,20 +404,90 @@
         let isMuted = false;
         let lastVolume = 1;
         let controlsTimeout;
+        let isVRVideoLoaded = false;
+        let videoPlayer;
+        let videoLoadAttempts = 0;
+        const MAX_LOAD_ATTEMPTS = 3;
+
+        function handleVideoError(videoElement) {
+            videoLoadAttempts++;
+            console.error('Video loading error:', videoElement.error);
+            
+            if (videoLoadAttempts < MAX_LOAD_ATTEMPTS) {
+                showError('Error loading video. Retrying...');
+                setTimeout(() => {
+                    videoElement.load();
+                }, 2000);
+            } else {
+                showError('Unable to load video. Please check your internet connection and try again.');
+                const vrButton = document.querySelector('.initialUI button');
+                if (vrButton) {
+                    vrButton.disabled = true;
+                    vrButton.style.opacity = '0.5';
+                }
+            }
+        }
+
+        function checkVideoAvailability(url) {
+            return new Promise((resolve, reject) => {
+                fetch(url, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            resolve(true);
+                        } else {
+                            reject(new Error('Video not available'));
+                        }
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
+            });
+        }
 
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
         function startVR() {
+            if (!isVRVideoLoaded) {
+                showError('Please wait while the video loads...');
+                return;
+            }
             const scene = document.querySelector('a-scene');
             if (scene) {
+                // Get current video state
+                const currentTime = videoPlayer.currentTime;
+                const isPaused = videoPlayer.paused;
+                const volume = videoPlayer.volume;
+
+                // Set up VR video sphere with current video
+                const videoSphere = document.querySelector('#videoSphere');
+                videoSphere.setAttribute('src', videoPlayer.src);
+                
                 scene.enterVR();
                 isVRMode = true;
+                
+                // Sync video state
+                if (videoElement) {
+                    videoElement.currentTime = currentTime;
+                    videoElement.volume = volume;
+                    if (!isPaused) {
+                        videoElement.play().catch(e => {
+                            showError('Error playing video in VR mode. Please try again.');
+                        });
+                    }
+                }
+
+                // Setup VR controls
+                setupVRControls();
             }
         }
 
         function enterVRMode() {
+            if (!isVRVideoLoaded) {
+                showError('Please wait while the video loads...');
+                return;
+            }
             document.querySelector('.initialUI').style.display = 'none';
             document.getElementById('vrScene').style.display = 'block';
             startVR();
@@ -429,6 +631,14 @@
                 document.getElementById('controlsPanel').style.display = 'none';
             });
 
+            // Add cursor interaction
+            const cursor = document.querySelector('a-cursor');
+            if (cursor) {
+                cursor.addEventListener('click', () => {
+                    showControls();
+                });
+            }
+
             // Video event listeners
             videoElement.addEventListener('timeupdate', updateProgress);
             videoElement.addEventListener('play', () => {
@@ -444,55 +654,153 @@
             document.addEventListener('touchstart', () => {
                 if (isVRMode) showControls();
             });
+
+            // Add quality selection
+            const qualityButton = document.createElement('button');
+            qualityButton.className = 'control-button';
+            qualityButton.textContent = '⚙️';
+            qualityButton.onclick = () => {
+                // Add quality selection logic here
+                showError('Quality selection coming soon');
+            };
+            document.querySelector('.controls-header').appendChild(qualityButton);
+
+            // Add playback speed control
+            const speedButton = document.createElement('button');
+            speedButton.className = 'control-button';
+            speedButton.textContent = '1x';
+            speedButton.onclick = () => {
+                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                const currentSpeed = videoElement.playbackRate;
+                const nextSpeed = speeds[(speeds.indexOf(currentSpeed) + 1) % speeds.length];
+                videoElement.playbackRate = nextSpeed;
+                speedButton.textContent = `${nextSpeed}x`;
+            };
+            document.querySelector('.controls-header').appendChild(speedButton);
+        }
+
+        function setupVRControls() {
+            const vrControls = document.getElementById('vrControls');
+            const vrPlayPause = document.getElementById('vrPlayPause');
+            const vrMute = document.getElementById('vrMute');
+            const vrRecenter = document.getElementById('vrRecenter');
+            const vrSpeed = document.getElementById('vrSpeed');
+            const vrProgressBar = document.getElementById('vrProgressBar');
+            const vrVolumeSlider = document.getElementById('vrVolumeSlider');
+
+            // Play/Pause
+            vrPlayPause.addEventListener('click', () => {
+                if (videoElement.paused) {
+                    videoElement.play();
+                    vrPlayPause.textContent = '⏸️ Pause';
+                } else {
+                    videoElement.pause();
+                    vrPlayPause.textContent = '▶️ Play';
+                }
+            });
+
+            // Mute
+            vrMute.addEventListener('click', () => {
+                toggleMute();
+                vrMute.textContent = isMuted ? '🔇' : '🔊';
+            });
+
+            // Recenter
+            vrRecenter.addEventListener('click', () => {
+                const camera = document.querySelector('a-entity[camera]');
+                if (camera) {
+                    camera.setAttribute('lookcontrols', 'enabled: false');
+                    camera.setAttribute('rotation', '0 0 0');
+                    camera.setAttribute('lookcontrols', 'enabled: true');
+                }
+            });
+
+            // Playback Speed
+            vrSpeed.addEventListener('click', () => {
+                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                const currentSpeed = videoElement.playbackRate;
+                const nextSpeed = speeds[(speeds.indexOf(currentSpeed) + 1) % speeds.length];
+                videoElement.playbackRate = nextSpeed;
+                vrSpeed.textContent = `${nextSpeed}x`;
+            });
+
+            // Progress Bar
+            vrProgressBar.addEventListener('click', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const pos = (e.clientY - rect.top) / rect.height;
+                videoElement.currentTime = (1 - pos) * videoElement.duration;
+            });
+
+            // Volume Control
+            vrVolumeSlider.addEventListener('click', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const volume = 1 - ((e.clientY - rect.top) / rect.height);
+                updateVolume(Math.max(0, Math.min(1, volume)));
+            });
+
+            // Touch Events
+            document.addEventListener('touchstart', () => {
+                vrControls.style.display = 'flex';
+                setTimeout(() => {
+                    if (!vrControls.matches(':hover')) {
+                        vrControls.style.display = 'none';
+                    }
+                }, 3000);
+            });
+
+            // Update VR Controls
+            videoElement.addEventListener('timeupdate', () => {
+                const progress = (videoElement.currentTime / videoElement.duration) * 100;
+                document.getElementById('vrProgressFill').style.height = `${progress}%`;
+                document.getElementById('vrCurrentTime').textContent = formatTime(videoElement.currentTime);
+                document.getElementById('vrDuration').textContent = formatTime(videoElement.duration);
+            });
+
+            videoElement.addEventListener('play', () => {
+                vrPlayPause.textContent = '⏸️ Pause';
+            });
+
+            videoElement.addEventListener('pause', () => {
+                vrPlayPause.textContent = '▶️ Play';
+            });
+        }
+
+        function loadVideo() {
+            videoPlayer = document.getElementById('videoPlayer');
+            const videoUrl = videoPlayer.getAttribute('src');
+
+            checkVideoAvailability(videoUrl)
+                .then(() => {
+                    videoPlayer.addEventListener('loadedmetadata', () => {
+                        console.log('Video metadata loaded');
+                        isVRVideoLoaded = true;
+                        
+                        // Set initial volume
+                        videoPlayer.volume = 1;
+                        
+                        // Setup video controls
+                        setupVideoControls();
+                    });
+
+                    videoPlayer.addEventListener('error', () => {
+                        handleVideoError(videoPlayer);
+                    });
+
+                    // Start loading the video
+                    videoPlayer.load();
+                })
+                .catch(error => {
+                    showError('Error: Video source is not available. Please check the URL and try again.');
+                    const vrButton = document.querySelector('.initialUI button');
+                    if (vrButton) {
+                        vrButton.disabled = true;
+                        vrButton.style.opacity = '0.5';
+                    }
+                });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const videoSphere = document.querySelector('#videoSphere');
-            const smallVideoPlayer = document.getElementById('smallVideoPlayer');
-
-            if (!videoSphere) {
-                showError('Error: Video sphere not found');
-                return;
-            }
-
-            // Handle small video player loading
-            smallVideoPlayer.addEventListener('loadedmetadata', () => {
-                console.log('Small video metadata loaded');
-                hideLoading();
-            });
-
-            smallVideoPlayer.addEventListener('error', () => {
-                showError('Error loading preview video');
-                hideLoading();
-            });
-
-            // Handle VR video sphere loading
-            videoSphere.addEventListener('loaded', () => {
-                videoElement = videoSphere.components.material?.material?.map?.image;
-
-                if (!videoElement) {
-                    showError('Error: Video element not found');
-                    return;
-                }
-
-                setupVideoControls();
-
-                // Video loaded successfully
-                videoElement.addEventListener('loadedmetadata', () => {
-                    console.log('VR video metadata loaded');
-                    if (isMobile()) {
-                        startVR();
-                    }
-                });
-
-                // Video load error
-                videoElement.addEventListener('error', () => {
-                    showError('Error loading VR video. Please check your connection and try again.');
-                });
-            });
-
-            // Start loading the videos
-            smallVideoPlayer.load();
+            loadVideo();
         });
     </script>
 </body>

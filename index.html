@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>VR Video Experience</title>
-    <link rel="icon" type="image/x-icon" href="/VR-Research/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
         body {
             margin: 0;
-            font-family: 'Roboto', Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #2b6cb0 100%);
+            font-family: Arial, sans-serif;
+            background: #1e3a8a;
             color: #fff;
             overflow: hidden;
             height: 100vh;
@@ -19,30 +19,19 @@
             justify-content: center;
             align-items: center;
         }
-        #initialUI {
+        .initialUI {
             text-align: center;
             z-index: 1000;
+            position: absolute;
+            top: 20%;
             width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
-        #initialUI h1 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        .initialUI video {
+            width: 320px;
+            height: 240px;
+            margin-bottom: 10px;
         }
-        #initialUI video {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-        }
-        #initialUI button {
+        .initialUI button {
             background: #a78bfa;
             color: #fff;
             padding: 15px 30px;
@@ -50,12 +39,43 @@
             border-radius: 10px;
             font-size: 1.2em;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transition: background 0.3s, transform 0.1s;
+            box-shadow: 0 4px 8px rgb(0 0 0 / 30%);
+            transition: background 0.3s;
         }
-        #initialUI button:hover {
-            background: #8b5cf6;
-            transform: scale(1.05);
+        .vrControls {
+            text-align: center;
+            z-index: 1001;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        #controlsPanel {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgb(0 0 0 / 70%);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #controlsPanel button {
+            background: #a78bfa;
+            color: #fff;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+            transition: background 0.3s;
+        }
+        #controlsPanel button:last-child {
+            margin-bottom: 0;
+        }
+        #controlsPanel button:first-child {
+            margin-top: 0;
         }
         .a-canvas {
             height: 100vh;
@@ -66,99 +86,74 @@
             top: 20px;
             left: 20px;
             color: #fff;
-            z-index: 1001;
+            z-index: 1002;
             display: none;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgb(0 0 0 / 70%);
             padding: 10px;
             border-radius: 5px;
-            font-size: 0.9em;
         }
-        #videoElement.hidden {
-            position: absolute;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-        }
+        /* Commented out to keep UI visible in VR mode */
+        /* .vr-mode .initialUI {
+            display: none;
+        } */
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="initialUI">
+    <div class="initialUI">
         <h1>VR Video Experience</h1>
-        <video id="videoElement" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" controls></video>
-        <button id="enterVRButton" onclick="enterVRMode()">Enter VR Mode</button>
+        <video id="smallVideoPlayer" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" controls width="320" height="240"></video>
+        <button onclick="enterVRMode()">Enter VR Mode</button>
     </div>
-    <a-scene id="vrScene" style="display: none;" vr-mode-ui="enabled: true" embedded>
-        <a-videosphere id="videoSphere" src="#videoElement" rotation="0 180 0" loop="true" crossOrigin="anonymous"></a-videosphere>
-        <a-entity camera look-controls position="0 0 0">
-            <a-cursor id="vrCursor" raycaster="objects: .clickable"></a-cursor>
-            <a-entity id="controlsPanel" position="0 0 -4" visible="false">
-                <a-plane id="playPauseButton" class="clickable" position="0 0.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
-                    event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Play/Pause Video" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
-                </a-plane>
-                <a-plane id="recenterButton" class="clickable" position="0 -0.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
-                    event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Recenter VR" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
-                </a-plane>
-                <a-plane id="toggleControlsButton" class="clickable" position="0 -1.5 0" width="1.5" height="0.4" color="#a78bfa" material="transparent: true; opacity: 0.8"
-                    event-set__enter="color: #8b5cf6" event-set__leave="color: #a78bfa">
-                    <a-text value="Hide Controls" align="center" color="white" font="roboto" position="0 0 0.1"></a-text>
-                </a-plane>
-            </a-entity>
-        </a-entity>
+    <a-scene id="vrScene" vr-mode-ui="enabled: true" embedded style="display: none;">
+        <a-videosphere
+            id="videoSphere"
+            src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
+            rotation="0 180 0"
+            autoplay="true"
+            loop="true"
+            crossOrigin="anonymous">
+        </a-videosphere>
+        <a-entity camera lookcontrols position="0 0 0"></a-entity>
+        <div class="vrControls">
+            <button id="toggleControlsButton">Show Controls</button>
+            <div id="controlsPanel" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)">
+                <button id="playPauseButton" class="clickable">Play/Pause Video</button>
+                <button id="recenterButton" class="clickable">Recenter VR</button>
+            </div>
+        </div>
     </a-scene>
     <div id="error-message"></div>
 
     <script>
-        var videoElement = document.getElementById('videoElement');
+        var videoElement;
 
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
-        function enterVRMode() {
-            document.getElementById('initialUI').style.display = 'none';
-            document.getElementById('vrScene').style.display = 'block';
-            videoElement.classList.add('hidden');
+        function startVR() {
             const scene = document.querySelector('a-scene');
             if (scene) {
                 scene.enterVR();
                 document.body.classList.add('vr-mode');
-                // Ensure video plays in VR mode
-                if (videoElement.paused) {
-                    videoElement.play().catch((err) => {
-                        console.error('Playback failed in VR mode:', err);
-                        document.getElementById('error-message').style.display = 'block';
-                        document.getElementById('error-message').textContent = 'Tap screen to start video in VR';
-                    });
-                }
             } else {
                 console.error('A-Frame scene not found');
             }
         }
 
-        function exitVRMode() {
-            const scene = document.querySelector('a-scene');
-            if (scene) {
-                scene.exitVR();
-                document.body.classList.remove('vr-mode');
-            } else {
-                console.error('A-Frame scene not found');
-            }
-            document.getElementById('vrScene').style.display = 'none';
-            document.getElementById('initialUI').style.display = 'block';
-            videoElement.classList.remove('hidden');
-            videoElement.pause();
-            videoElement.currentTime = 0; // Rewind to start
+        function enterVRMode() {
+            document.querySelector('.initialUI').style.display = 'none';
+            document.getElementById('vrScene').style.display = 'block';
+            startVR();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const videoSphere = document.getElementById('videoSphere');
+            const videoSphere = document.querySelector('#videoSphere');
             const errorMessage = document.getElementById('error-message');
+            const toggleControlsButton = document.getElementById('toggleControlsButton');
+            const controlsPanel = document.getElementById('controlsPanel');
             const playPauseButton = document.getElementById('playPauseButton');
             const recenterButton = document.getElementById('recenterButton');
-            const toggleControlsButton = document.getElementById('toggleControlsButton');
 
             if (!videoSphere) {
                 console.error('Video sphere element not found');
@@ -167,84 +162,113 @@
                 return;
             }
 
-            // Play/Pause button
-            playPauseButton.addEventListener('click', function() {
-                if (videoElement.paused) {
-                    videoElement.play();
-                    playPauseButton.children[0].setAttribute('value', 'Pause Video');
-                } else {
-                    videoElement.pause();
-                    playPauseButton.children[0].setAttribute('value', 'Play Video');
-                }
-            });
+            const scene = document.getElementById('vrScene');
+            scene.addEventListener('loaded', () => {
+                videoSphere.addEventListener('loaded', () => {
+                    videoElement = videoSphere.components.material?.material?.map?.image;
 
-            // Recenter button
-            recenterButton.addEventListener('click', function() {
-                const camera = document.querySelector('a-entity[camera]');
-                if (camera) {
-                    camera.setAttribute('look-controls', 'enabled: false');
-                    camera.setAttribute('rotation', '0 0 0');
-                    camera.setAttribute('look-controls', 'enabled: true');
-                } else {
-                    console.error('Camera entity not found');
-                }
-            });
+                    if (!videoElement) {
+                        console.error('Video element not found in videosphere');
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Error: Video element not found';
+                        return;
+                    }
 
-            // Toggle controls button
-            toggleControlsButton.addEventListener('click', function() {
-                const controlsPanel = document.getElementById('controlsPanel');
-                const isVisible = controlsPanel.getAttribute('visible') === 'true';
-                controlsPanel.setAttribute('visible', !isVisible);
-                toggleControlsButton.children[0].setAttribute('value', isVisible ? 'Show Controls' : 'Hide Controls');
-            });
-
-            // Global click to toggle controls
-            document.getElementById('vrScene').addEventListener('click', function(event) {
-                if (!event.target.classList.contains('clickable')) {
-                    const controlsPanel = document.getElementById('controlsPanel');
-                    const isVisible = controlsPanel.getAttribute('visible') === 'true';
-                    controlsPanel.setAttribute('visible', !isVisible);
-                    toggleControlsButton.children[0].setAttribute('value', isVisible ? 'Show Controls' : 'Hide Controls');
-                }
-            });
-
-            // Video events
-            videoElement.addEventListener('loadeddata', () => {
-                console.log('Video loaded successfully');
-            });
-
-            // Handle autoplay restrictions
-            videoElement.addEventListener('canplay', () => {
-                videoElement.play().catch((err) => {
-                    errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Tap screen to start video';
-                    console.error('Autoplay failed:', err);
-                    document.body.addEventListener('touchstart', function startVideo() {
-                        videoElement.play();
-                        document.body.removeEventListener('touchstart', startVideo);
-                        errorMessage.style.display = 'none';
-                        if (isMobile()) {
-                            // Uncomment to auto-enter VR on mobile after tap
-                            // enterVRMode();
+                    // Set up play/pause button
+                    function updateButtonState() {
+                        if (videoElement.paused) {
+                            playPauseButton.textContent = 'Play Video';
+                        } else {
+                            playPauseButton.textContent = 'Pause Video';
                         }
-                    }, { once: true });
-                });
-            });
+                    }
 
-            // Video load error
-            videoElement.addEventListener('error', (e) => {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Error loading video: ' + (e.message || 'Unknown error');
-                console.error('Video loading error:', e);
-            });
+                    videoElement.addEventListener('play', updateButtonState);
+                    videoElement.addEventListener('pause', updateButtonState);
+                    updateButtonState();
 
-            // Ensure video resumes in VR mode
-            videoElement.addEventListener('pause', () => {
-                if (document.body.classList.contains('vr-mode') && videoElement.paused) {
-                    videoElement.play().catch((err) => {
-                        console.error('Failed to resume video in VR mode:', err);
+                    playPauseButton.addEventListener('click', function() {
+                        if (videoElement.paused) {
+                            videoElement.play();
+                        } else {
+                            videoElement.pause();
+                        }
                     });
-                }
+
+                    // Set up recenter button
+                    recenterButton.addEventListener('click', function() {
+                        const camera = document.querySelector('a-entity[camera]');
+                        if (camera) {
+                            camera.setAttribute('lookcontrols', 'enabled: false');
+                            camera.setAttribute('rotation', '0 0 0');
+                            camera.setAttribute('lookcontrols', 'enabled: true');
+                        } else {
+                            console.error('Camera entity not found');
+                        }
+                    });
+
+                    // Handle VR mode and controls
+                    scene.addEventListener('enter-vr', () => {
+                        toggleControlsButton.style.display = 'block';
+                        // Show cursor in VR mode
+                        const cursor = document.createElement('a-cursor');
+                        cursor.setAttribute('id', 'vrCursor');
+                        cursor.setAttribute('raycaster', 'objects: .clickable');
+                        scene.appendChild(cursor);
+                    });
+
+                    scene.addEventListener('exit-vr', () => {
+                        toggleControlsButton.style.display = 'none';
+                        controlsPanel.style.display = 'none';
+                        const cursor = document.getElementById('vrCursor');
+                        if (cursor) cursor.remove();
+                    });
+
+                    toggleControlsButton.addEventListener('click', function() {
+                        if (controlsPanel.style.display === 'none') {
+                            controlsPanel.style.display = 'block';
+                        } else {
+                            controlsPanel.style.display = 'none';
+                        }
+                    });
+
+                    // Make buttons clickable in VR
+                    playPauseButton.classList.add('clickable');
+                    recenterButton.classList.add('clickable');
+                    toggleControlsButton.classList.add('clickable');
+
+                    // Video loaded successfully
+                    videoElement.addEventListener('loadeddata', () => {
+                        console.log('Video loaded successfully');
+                        if (isMobile()) {
+                            startVR();
+                        }
+                    });
+
+                    // Video load error
+                    videoElement.addEventListener('error', (e) => {
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Error loading video: ' + (e.message || 'Unknown error');
+                        console.error('Video loading error:', e);
+                    });
+
+                    // Handle autoplay restrictions
+                    videoElement.addEventListener('canplay', () => {
+                        videoElement.play().catch((err) => {
+                            errorMessage.style.display = 'block';
+                            errorMessage.textContent = 'Tap screen to start video';
+                            console.error('Autoplay failed:', err);
+                            document.body.addEventListener('touchstart', function startVideo() {
+                                videoElement.play();
+                                document.body.removeEventListener('touchstart', startVideo);
+                                errorMessage.style.display = 'none';
+                                if (isMobile()) {
+                                    startVR();
+                                }
+                            });
+                        });
+                    });
+                });
             });
         });
     </script>

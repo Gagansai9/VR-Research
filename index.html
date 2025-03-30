@@ -755,8 +755,7 @@
                    src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"
                    preload="auto"
                    crossorigin="anonymous"
-                   playsinline
-                   loop="true">
+                   playsinline>
             </video>
         </a-assets>
 
@@ -792,127 +791,186 @@
     <script>
         let vrVideo, vrScene, vrControls;
         let isVRMode = false;
+        let isInitialized = false;
 
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', initialize);
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for A-Frame to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initialize);
+            } else {
+                initialize();
+            }
+        });
 
         function initialize() {
-            vrVideo = document.getElementById('vrVideo');
-            vrScene = document.getElementById('vrScene');
-            vrControls = document.getElementById('vrControls');
+            try {
+                // Get elements
+                vrVideo = document.getElementById('vrVideo');
+                vrScene = document.getElementById('vrScene');
+                vrControls = document.getElementById('vrControls');
 
-            if (!vrVideo || !vrScene || !vrControls) {
+                if (!vrVideo || !vrScene || !vrControls) {
+                    throw new Error('Required elements not found');
+                }
+
+                // Set up video event listeners
+                vrVideo.addEventListener('error', handleVideoError);
+                vrVideo.addEventListener('loadedmetadata', () => {
+                    console.log('VR video metadata loaded');
+                    isInitialized = true;
+                });
+
+                // Set up control buttons
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                const exitBtn = document.getElementById('exitBtn');
+
+                if (playPauseBtn) {
+                    playPauseBtn.addEventListener('click', togglePlay);
+                }
+                if (exitBtn) {
+                    exitBtn.addEventListener('click', exitVR);
+                }
+
+                // Check VR support
+                if (navigator.xr) {
+                    navigator.xr.isSessionSupported('immersive-vr')
+                        .then(supported => {
+                            if (!supported) {
+                                showError('VR not supported on this device');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error checking VR support:', err);
+                            showError('Error checking VR support');
+                        });
+                }
+
+                console.log('Initialization successful');
+            } catch (error) {
+                console.error('Initialization error:', error);
                 showError('Failed to initialize VR components');
-                return;
-            }
-
-            // Set up video event listeners
-            vrVideo.addEventListener('error', handleVideoError);
-            vrVideo.addEventListener('loadedmetadata', () => {
-                console.log('VR video metadata loaded');
-            });
-
-            // Set up control buttons
-            document.getElementById('playPauseBtn').addEventListener('click', togglePlay);
-            document.getElementById('exitBtn').addEventListener('click', exitVR);
-
-            // Check VR support
-            if (navigator.xr) {
-                navigator.xr.isSessionSupported('immersive-vr')
-                    .then(supported => {
-                        if (!supported) {
-                            showError('VR not supported on this device');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error checking VR support:', err);
-                        showError('Error checking VR support');
-                    });
             }
         }
 
         function enterVR() {
-            if (!vrVideo.readyState) {
+            if (!isInitialized) {
                 showError('Please wait for video to load');
                 return;
             }
 
-            document.querySelector('.initialUI').style.display = 'none';
-            vrScene.style.display = 'block';
+            try {
+                document.querySelector('.initialUI').style.display = 'none';
+                vrScene.style.display = 'block';
 
-            vrScene.enterVR()
-                .then(() => {
-                    isVRMode = true;
-                    vrControls.classList.add('visible');
-                    setupVRInteraction();
-                })
-                .catch(error => {
-                    console.error('Error entering VR:', error);
-                    showError('Failed to enter VR mode');
-                });
+                // Ensure video is ready
+                if (vrVideo.readyState < 2) {
+                    showError('Video not ready. Please wait...');
+                    return;
+                }
+
+                vrScene.enterVR()
+                    .then(() => {
+                        isVRMode = true;
+                        vrControls.classList.add('visible');
+                        setupVRInteraction();
+                    })
+                    .catch(error => {
+                        console.error('Error entering VR:', error);
+                        showError('Failed to enter VR mode');
+                    });
+            } catch (error) {
+                console.error('Error in enterVR:', error);
+                showError('Failed to enter VR mode');
+            }
         }
 
         function exitVR() {
             if (!isVRMode) return;
 
-            vrScene.exitVR()
-                .then(() => {
-                    isVRMode = false;
-                    vrControls.classList.remove('visible');
-                    vrVideo.pause();
-                    document.querySelector('.initialUI').style.display = 'block';
-                    vrScene.style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Error exiting VR:', error);
-                    showError('Failed to exit VR mode');
-                });
+            try {
+                vrScene.exitVR()
+                    .then(() => {
+                        isVRMode = false;
+                        vrControls.classList.remove('visible');
+                        if (vrVideo) {
+                            vrVideo.pause();
+                        }
+                        document.querySelector('.initialUI').style.display = 'block';
+                        vrScene.style.display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error exiting VR:', error);
+                        showError('Failed to exit VR mode');
+                    });
+            } catch (error) {
+                console.error('Error in exitVR:', error);
+                showError('Failed to exit VR mode');
+            }
         }
 
         function togglePlay() {
             if (!vrVideo) return;
 
-            if (vrVideo.paused) {
-                vrVideo.play()
-                    .then(() => {
-                        document.querySelector('#playPauseBtn i').textContent = 'pause';
-                    })
-                    .catch(error => {
-                        console.error('Error playing video:', error);
-                        showError('Failed to play video');
-                    });
-            } else {
-                vrVideo.pause();
-                document.querySelector('#playPauseBtn i').textContent = 'play_arrow';
+            try {
+                if (vrVideo.paused) {
+                    vrVideo.play()
+                        .then(() => {
+                            const playPauseIcon = document.querySelector('#playPauseBtn i');
+                            if (playPauseIcon) {
+                                playPauseIcon.textContent = 'pause';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error playing video:', error);
+                            showError('Failed to play video');
+                        });
+                } else {
+                    vrVideo.pause();
+                    const playPauseIcon = document.querySelector('#playPauseBtn i');
+                    if (playPauseIcon) {
+                        playPauseIcon.textContent = 'play_arrow';
+                    }
+                }
+            } catch (error) {
+                console.error('Error in togglePlay:', error);
+                showError('Failed to toggle video playback');
             }
         }
 
         function setupVRInteraction() {
-            // Show/hide controls on head movement
-            const camera = document.getElementById('camera');
-            let lastRotation = { x: 0, y: 0 };
-            let controlsTimeout;
+            try {
+                const camera = document.getElementById('camera');
+                if (!camera) return;
 
-            function checkHeadMovement() {
-                if (!camera || !isVRMode) return;
+                let lastRotation = { x: 0, y: 0 };
+                let controlsTimeout;
 
-                const rotation = camera.getAttribute('rotation');
-                const movement = Math.abs(rotation.x - lastRotation.x) + 
-                               Math.abs(rotation.y - lastRotation.y);
+                function checkHeadMovement() {
+                    if (!camera || !isVRMode) return;
 
-                if (movement > 1) {
-                    vrControls.classList.add('visible');
-                    clearTimeout(controlsTimeout);
-                    controlsTimeout = setTimeout(() => {
-                        vrControls.classList.remove('visible');
-                    }, 3000);
+                    const rotation = camera.getAttribute('rotation');
+                    if (!rotation) return;
+
+                    const movement = Math.abs(rotation.x - lastRotation.x) + 
+                                   Math.abs(rotation.y - lastRotation.y);
+
+                    if (movement > 1) {
+                        vrControls.classList.add('visible');
+                        clearTimeout(controlsTimeout);
+                        controlsTimeout = setTimeout(() => {
+                            vrControls.classList.remove('visible');
+                        }, 3000);
+                    }
+
+                    lastRotation = { ...rotation };
+                    requestAnimationFrame(checkHeadMovement);
                 }
 
-                lastRotation = { ...rotation };
-                requestAnimationFrame(checkHeadMovement);
+                checkHeadMovement();
+            } catch (error) {
+                console.error('Error in setupVRInteraction:', error);
             }
-
-            checkHeadMovement();
         }
 
         function handleVideoError(event) {
@@ -922,11 +980,13 @@
 
         function showError(message) {
             const errorElement = document.getElementById('error-message');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-            setTimeout(() => {
-                errorElement.style.display = 'none';
-            }, 5000);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                }, 5000);
+            }
         }
     </script>
 </body>

@@ -213,7 +213,11 @@
 <body>
     <div class="initialUI">
         <h1>VR Video Experience</h1>
-        <video id="smallVideoPlayer" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" controls preload="auto"></video>
+        <video id="smallVideoPlayer" 
+               src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" 
+               controls 
+               preload="metadata">
+        </video>
         <button onclick="enterVRMode()">Enter VR Mode</button>
     </div>
     <a-scene id="vrScene" vr-mode-ui="enabled: true" embedded style="display: none;">
@@ -223,7 +227,8 @@
             rotation="0 180 0"
             autoplay="true"
             loop="true"
-            crossOrigin="anonymous">
+            crossOrigin="anonymous"
+            preload="metadata">
         </a-videosphere>
         <a-entity camera lookcontrols position="0 0 0"></a-entity>
         <div id="controlsPanel">
@@ -365,8 +370,83 @@
             }, 3000);
         }
 
+        function setupVideoControls() {
+            // Setup video controls
+            document.getElementById('playPauseButton').addEventListener('click', () => {
+                if (videoElement.paused) {
+                    videoElement.play().catch(e => {
+                        showError('Error playing video. Please try again.');
+                    });
+                } else {
+                    videoElement.pause();
+                }
+            });
+
+            document.getElementById('recenterButton').addEventListener('click', () => {
+                const camera = document.querySelector('a-entity[camera]');
+                if (camera) {
+                    camera.setAttribute('lookcontrols', 'enabled: false');
+                    camera.setAttribute('rotation', '0 0 0');
+                    camera.setAttribute('lookcontrols', 'enabled: true');
+                }
+            });
+
+            document.getElementById('progressBar').addEventListener('click', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                videoElement.currentTime = pos * videoElement.duration;
+            });
+
+            document.querySelector('.volume-slider').addEventListener('click', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const volume = (e.clientX - rect.left) / rect.width;
+                updateVolume(Math.max(0, Math.min(1, volume)));
+            });
+
+            document.getElementById('muteButton').addEventListener('click', toggleMute);
+            document.getElementById('quickMute').addEventListener('click', toggleMute);
+
+            document.getElementById('quickPlayPause').addEventListener('click', () => {
+                if (videoElement.paused) {
+                    videoElement.play();
+                    document.getElementById('quickPlayPause').textContent = '⏸️';
+                } else {
+                    videoElement.pause();
+                    document.getElementById('quickPlayPause').textContent = '▶️';
+                }
+            });
+
+            document.getElementById('quickRecenter').addEventListener('click', () => {
+                const camera = document.querySelector('a-entity[camera]');
+                if (camera) {
+                    camera.setAttribute('lookcontrols', 'enabled: false');
+                    camera.setAttribute('rotation', '0 0 0');
+                    camera.setAttribute('lookcontrols', 'enabled: true');
+                }
+            });
+
+            document.getElementById('closeControls').addEventListener('click', () => {
+                document.getElementById('controlsPanel').style.display = 'none';
+            });
+
+            // Video event listeners
+            videoElement.addEventListener('timeupdate', updateProgress);
+            videoElement.addEventListener('play', () => {
+                document.getElementById('quickPlayPause').textContent = '⏸️';
+            });
+            videoElement.addEventListener('pause', () => {
+                document.getElementById('quickPlayPause').textContent = '▶️';
+            });
+
+            // Movement detection
+            document.addEventListener('mousemove', showControls);
+            document.addEventListener('touchmove', showControls);
+            document.addEventListener('touchstart', () => {
+                if (isVRMode) showControls();
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            showLoading('Loading video...');
             const videoSphere = document.querySelector('#videoSphere');
             const smallVideoPlayer = document.getElementById('smallVideoPlayer');
 
@@ -375,8 +455,18 @@
                 return;
             }
 
-            smallVideoPlayer.load();
+            // Handle small video player loading
+            smallVideoPlayer.addEventListener('loadedmetadata', () => {
+                console.log('Small video metadata loaded');
+                hideLoading();
+            });
 
+            smallVideoPlayer.addEventListener('error', () => {
+                showError('Error loading preview video');
+                hideLoading();
+            });
+
+            // Handle VR video sphere loading
             videoSphere.addEventListener('loaded', () => {
                 videoElement = videoSphere.components.material?.material?.map?.image;
 
@@ -385,92 +475,24 @@
                     return;
                 }
 
-                // Setup video controls
-                document.getElementById('playPauseButton').addEventListener('click', () => {
-                    if (videoElement.paused) {
-                        videoElement.play().catch(e => {
-                            showError('Error playing video. Please try again.');
-                        });
-                    } else {
-                        videoElement.pause();
-                    }
-                });
-
-                document.getElementById('recenterButton').addEventListener('click', () => {
-                    const camera = document.querySelector('a-entity[camera]');
-                    if (camera) {
-                        camera.setAttribute('lookcontrols', 'enabled: false');
-                        camera.setAttribute('rotation', '0 0 0');
-                        camera.setAttribute('lookcontrols', 'enabled: true');
-                    }
-                });
-
-                document.getElementById('progressBar').addEventListener('click', (e) => {
-                    const rect = e.target.getBoundingClientRect();
-                    const pos = (e.clientX - rect.left) / rect.width;
-                    videoElement.currentTime = pos * videoElement.duration;
-                });
-
-                document.querySelector('.volume-slider').addEventListener('click', (e) => {
-                    const rect = e.target.getBoundingClientRect();
-                    const volume = (e.clientX - rect.left) / rect.width;
-                    updateVolume(Math.max(0, Math.min(1, volume)));
-                });
-
-                document.getElementById('muteButton').addEventListener('click', toggleMute);
-                document.getElementById('quickMute').addEventListener('click', toggleMute);
-
-                document.getElementById('quickPlayPause').addEventListener('click', () => {
-                    if (videoElement.paused) {
-                        videoElement.play();
-                        document.getElementById('quickPlayPause').textContent = '⏸️';
-                    } else {
-                        videoElement.pause();
-                        document.getElementById('quickPlayPause').textContent = '▶️';
-                    }
-                });
-
-                document.getElementById('quickRecenter').addEventListener('click', () => {
-                    const camera = document.querySelector('a-entity[camera]');
-                    if (camera) {
-                        camera.setAttribute('lookcontrols', 'enabled: false');
-                        camera.setAttribute('rotation', '0 0 0');
-                        camera.setAttribute('lookcontrols', 'enabled: true');
-                    }
-                });
-
-                document.getElementById('closeControls').addEventListener('click', () => {
-                    document.getElementById('controlsPanel').style.display = 'none';
-                });
-
-                // Video event listeners
-                videoElement.addEventListener('timeupdate', updateProgress);
-                videoElement.addEventListener('play', () => {
-                    document.getElementById('quickPlayPause').textContent = '⏸️';
-                });
-                videoElement.addEventListener('pause', () => {
-                    document.getElementById('quickPlayPause').textContent = '▶️';
-                });
-
-                // Movement detection
-                document.addEventListener('mousemove', showControls);
-                document.addEventListener('touchmove', showControls);
-                document.addEventListener('touchstart', () => {
-                    if (isVRMode) showControls();
-                });
+                setupVideoControls();
 
                 // Video loaded successfully
-                videoElement.addEventListener('loadeddata', () => {
-                    hideLoading();
-                    if (isMobile()) startVR();
+                videoElement.addEventListener('loadedmetadata', () => {
+                    console.log('VR video metadata loaded');
+                    if (isMobile()) {
+                        startVR();
+                    }
                 });
 
                 // Video load error
                 videoElement.addEventListener('error', () => {
-                    showError('Error loading video. Please check your connection and try again.');
-                    hideLoading();
+                    showError('Error loading VR video. Please check your connection and try again.');
                 });
             });
+
+            // Start loading the videos
+            smallVideoPlayer.load();
         });
     </script>
 </body>

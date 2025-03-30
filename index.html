@@ -590,195 +590,184 @@
 
     <script>
         // Global variables
-        let vrVideo = null;
-        let vrScene = null;
-        let vrControls = null;
-        let vrInterface = null;
-        let isVRMode = false;
-        let isInitialized = false;
-        let loadingIndicator = null;
-        let loadingStatus = null;
-        let loadingTimeout = null;
+        const globals = {
+            vrVideo: null,
+            vrScene: null,
+            vrControls: null,
+            vrInterface: null,
+            isVRMode: false,
+            isInitialized: false,
+            loadingTimeout: null
+        };
 
-        // Initialize helper functions first
-        function updateLoadingStatus(message) {
-            const status = document.querySelector('.loading-status');
-            if (status) {
-                status.textContent = message;
-            }
-            console.log('Loading status:', message);
-        }
-
-        function showLoading() {
-            const indicator = document.getElementById('loadingIndicator');
-            if (indicator) {
-                indicator.classList.add('visible');
-            }
-        }
-
-        function hideLoading() {
-            const indicator = document.getElementById('loadingIndicator');
-            if (indicator) {
-                indicator.classList.remove('visible');
-            }
-        }
-
-        function showError(message) {
-            const errorElement = document.getElementById('error-message');
-            if (errorElement) {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-                setTimeout(() => {
-                    errorElement.style.display = 'none';
-                }, 8000);
-            }
-            console.error('Error:', message);
-            hideLoading();
-        }
-
-        function handleVideoError(event) {
-            console.error('Video error:', event);
-            showError('Error loading video');
-        }
-
-        // Video preloading function
-        function preloadVideo() {
-            return new Promise((resolve, reject) => {
-                const video = document.getElementById('vrVideo');
-                if (!video) {
-                    reject(new Error('Video element not found'));
-                    return;
+        // Define all utility functions first
+        const utils = {
+            showLoading: function() {
+                const indicator = document.getElementById('loadingIndicator');
+                if (indicator) {
+                    indicator.classList.add('visible');
                 }
+            },
 
-                function videoCanPlayHandler() {
-                    console.log('Video can play event fired');
-                    clearTimeout(loadingTimeout);
+            hideLoading: function() {
+                const indicator = document.getElementById('loadingIndicator');
+                if (indicator) {
+                    indicator.classList.remove('visible');
+                }
+            },
+
+            updateLoadingStatus: function(message) {
+                const status = document.querySelector('.loading-status');
+                if (status) {
+                    status.textContent = message;
+                }
+                console.log('Loading status:', message);
+            },
+
+            showError: function(message) {
+                const errorElement = document.getElementById('error-message');
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.style.display = 'block';
+                    setTimeout(() => {
+                        errorElement.style.display = 'none';
+                    }, 8000);
+                }
+                console.error('Error:', message);
+                utils.hideLoading();
+            },
+
+            handleVideoError: function(event) {
+                console.error('Video error:', event);
+                utils.showError('Error loading video');
+            },
+
+            formatTime: function(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                seconds = Math.floor(seconds % 60);
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        };
+
+        // Video handling functions
+        const videoHandler = {
+            preloadVideo: function() {
+                return new Promise((resolve, reject) => {
+                    const video = document.getElementById('vrVideo');
+                    if (!video) {
+                        reject(new Error('Video element not found'));
+                        return;
+                    }
+
+                    function videoCanPlayHandler() {
+                        console.log('Video can play event fired');
+                        clearTimeout(globals.loadingTimeout);
+                        video.removeEventListener('canplay', videoCanPlayHandler);
+                        resolve();
+                    }
+
+                    function videoErrorHandler(error) {
+                        console.error('Video error:', error);
+                        clearTimeout(globals.loadingTimeout);
+                        video.removeEventListener('error', videoErrorHandler);
+                        reject(new Error('Video failed to load: ' + (error.message || 'Unknown error')));
+                    }
+
                     video.removeEventListener('canplay', videoCanPlayHandler);
-                    resolve();
-                }
-
-                function videoErrorHandler(error) {
-                    console.error('Video error:', error);
-                    clearTimeout(loadingTimeout);
                     video.removeEventListener('error', videoErrorHandler);
-                    reject(new Error('Video failed to load: ' + (error.message || 'Unknown error')));
-                }
 
-                // Clear previous listeners
-                video.removeEventListener('canplay', videoCanPlayHandler);
-                video.removeEventListener('error', videoErrorHandler);
+                    globals.loadingTimeout = setTimeout(() => {
+                        video.removeEventListener('canplay', videoCanPlayHandler);
+                        video.removeEventListener('error', videoErrorHandler);
+                        reject(new Error('Video loading timed out'));
+                    }, 30000);
 
-                // Set up timeout
-                loadingTimeout = setTimeout(() => {
-                    video.removeEventListener('canplay', videoCanPlayHandler);
-                    video.removeEventListener('error', videoErrorHandler);
-                    reject(new Error('Video loading timed out'));
-                }, 30000);
+                    video.addEventListener('canplay', videoCanPlayHandler);
+                    video.addEventListener('error', videoErrorHandler);
+                    video.load();
+                });
+            }
+        };
 
-                // Add event listeners
-                video.addEventListener('canplay', videoCanPlayHandler);
-                video.addEventListener('error', videoErrorHandler);
-
-                // Force reload the video
-                video.load();
-            });
-        }
-
-        // Initialize the application
-        function initialize() {
+        // Main initialization function
+        async function initialize() {
             try {
                 console.log('Initializing components...');
-                updateLoadingStatus('Initializing components...');
+                utils.updateLoadingStatus('Initializing components...');
                 
-                // Get all required elements
-                vrVideo = document.getElementById('vrVideo');
-                vrScene = document.getElementById('vrScene');
-                vrInterface = document.getElementById('vrInterface');
+                globals.vrVideo = document.getElementById('vrVideo');
+                globals.vrScene = document.getElementById('vrScene');
+                globals.vrInterface = document.getElementById('vrInterface');
                 
-                if (!vrVideo || !vrScene || !vrInterface) {
+                if (!globals.vrVideo || !globals.vrScene || !globals.vrInterface) {
                     throw new Error('Required elements not found');
                 }
 
-                // Set up video event listeners
-                vrVideo.addEventListener('loadedmetadata', () => {
+                globals.vrVideo.addEventListener('loadedmetadata', () => {
                     console.log('Video metadata loaded');
-                    updateLoadingStatus('Video metadata loaded');
-                    isInitialized = true;
+                    utils.updateLoadingStatus('Video metadata loaded');
+                    globals.isInitialized = true;
                 });
 
-                // Set up A-Frame scene loaded event
-                vrScene.addEventListener('loaded', () => {
+                globals.vrScene.addEventListener('loaded', () => {
                     console.log('A-Frame scene loaded');
-                    updateLoadingStatus('VR scene ready');
+                    utils.updateLoadingStatus('VR scene ready');
                 });
 
-                // Check VR support
                 if (navigator.xr) {
-                    navigator.xr.isSessionSupported('immersive-vr')
-                        .then(supported => {
-                            if (!supported) {
-                                showError('VR not supported on this device');
-                            } else {
-                                updateLoadingStatus('VR support confirmed');
-                                // Try preloading video
-                                preloadVideo().catch(err => {
-                                    console.warn('Initial video preload failed:', err);
-                                });
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error checking VR support:', err);
-                            showError('Error checking VR support');
-                        });
+                    try {
+                        const supported = await navigator.xr.isSessionSupported('immersive-vr');
+                        if (!supported) {
+                            utils.showError('VR not supported on this device');
+                        } else {
+                            utils.updateLoadingStatus('VR support confirmed');
+                            await videoHandler.preloadVideo().catch(err => {
+                                console.warn('Initial video preload failed:', err);
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Error checking VR support:', err);
+                        utils.showError('Error checking VR support');
+                    }
                 } else {
-                    showError('WebXR not available on this browser');
+                    utils.showError('WebXR not available on this browser');
                 }
 
                 setupControlButtons();
                 console.log('Initialization successful');
-                updateLoadingStatus('Ready to enter VR');
+                utils.updateLoadingStatus('Ready to enter VR');
             } catch (error) {
                 console.error('Initialization error:', error);
-                showError('Failed to initialize: ' + error.message);
+                utils.showError('Failed to initialize: ' + error.message);
             }
         }
-
-        // Wait for page load
-        window.addEventListener('load', () => {
-            console.log('Page loaded, checking A-Frame...');
-            if (typeof AFRAME === 'undefined') {
-                showError('A-Frame failed to load');
-                return;
-            }
-            initialize();
-        });
 
         // VR entry function
         async function enterVR() {
             try {
-                showLoading();
-                updateLoadingStatus('Preparing VR mode...');
+                utils.showLoading();
+                utils.updateLoadingStatus('Preparing VR mode...');
 
-                if (!vrVideo || !vrScene) {
+                if (!globals.vrVideo || !globals.vrScene) {
                     throw new Error('VR components not initialized');
                 }
 
                 document.querySelector('.initialUI').style.display = 'none';
-                vrScene.style.display = 'block';
+                globals.vrScene.style.display = 'block';
 
-                updateLoadingStatus('Loading video...');
-                await preloadVideo();
+                utils.updateLoadingStatus('Loading video...');
+                await videoHandler.preloadVideo();
                 
-                updateLoadingStatus('Entering VR mode...');
-                await vrScene.enterVR();
+                utils.updateLoadingStatus('Entering VR mode...');
+                await globals.vrScene.enterVR();
 
-                isVRMode = true;
+                globals.isVRMode = true;
                 showVRInterface();
                 setupVRInteraction();
-                hideLoading();
+                utils.hideLoading();
 
                 try {
-                    await vrVideo.play();
+                    await globals.vrVideo.play();
                     const playPauseBtn = document.querySelector('#playPauseBtn i');
                     if (playPauseBtn) {
                         playPauseBtn.textContent = 'pause';
@@ -788,12 +777,25 @@
                 }
             } catch (error) {
                 console.error('Error entering VR:', error);
-                showError(error.message || 'Failed to enter VR mode');
-                hideLoading();
+                utils.showError(error.message || 'Failed to enter VR mode');
+                utils.hideLoading();
                 document.querySelector('.initialUI').style.display = 'block';
-                vrScene.style.display = 'none';
+                globals.vrScene.style.display = 'none';
             }
         }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, checking A-Frame...');
+            if (typeof AFRAME === 'undefined') {
+                utils.showError('A-Frame failed to load');
+                return;
+            }
+            initialize();
+        });
+
+        // Make enterVR function globally available for the button
+        window.enterVR = enterVR;
 
         function setupControlButtons() {
             const buttons = {
@@ -808,12 +810,12 @@
             }
             if (buttons.rewind) {
                 buttons.rewind.addEventListener('click', () => {
-                    if (vrVideo) vrVideo.currentTime = Math.max(0, vrVideo.currentTime - 10);
+                    if (globals.vrVideo) globals.vrVideo.currentTime = Math.max(0, globals.vrVideo.currentTime - 10);
                 });
             }
             if (buttons.forward) {
                 buttons.forward.addEventListener('click', () => {
-                    if (vrVideo) vrVideo.currentTime = Math.min(vrVideo.duration, vrVideo.currentTime + 10);
+                    if (globals.vrVideo) globals.vrVideo.currentTime = Math.min(globals.vrVideo.duration, globals.vrVideo.currentTime + 10);
                 });
             }
             if (buttons.exit) {
@@ -823,49 +825,49 @@
             const progressBar = document.getElementById('progressBar');
             if (progressBar) {
                 progressBar.addEventListener('click', (event) => {
-                    if (!vrVideo) return;
+                    if (!globals.vrVideo) return;
                     const rect = progressBar.getBoundingClientRect();
                     const ratio = (event.clientX - rect.left) / rect.width;
-                    vrVideo.currentTime = ratio * vrVideo.duration;
+                    globals.vrVideo.currentTime = ratio * globals.vrVideo.duration;
                 });
             }
         }
 
         function exitVR() {
-            if (!isVRMode) return;
+            if (!globals.isVRMode) return;
 
             try {
-                vrScene.exitVR()
+                globals.vrScene.exitVR()
                     .then(() => {
-                        isVRMode = false;
+                        globals.isVRMode = false;
                         hideVRInterface();
-                        if (vrVideo) {
-                            vrVideo.pause();
+                        if (globals.vrVideo) {
+                            globals.vrVideo.pause();
                         }
                         document.querySelector('.initialUI').style.display = 'block';
-                        vrScene.style.display = 'none';
+                        globals.vrScene.style.display = 'none';
                     })
                     .catch(error => {
                         console.error('Error exiting VR:', error);
-                        showError('Failed to exit VR mode');
+                        utils.showError('Failed to exit VR mode');
                     });
             } catch (error) {
                 console.error('Error in exitVR:', error);
-                showError('Failed to exit VR mode');
+                utils.showError('Failed to exit VR mode');
             }
         }
 
         function showVRInterface() {
-            if (vrInterface) {
-                vrInterface.classList.add('visible');
+            if (globals.vrInterface) {
+                globals.vrInterface.classList.add('visible');
                 document.getElementById('vrCursor').classList.add('visible');
                 document.getElementById('vrControlsPanel').classList.add('visible');
             }
         }
 
         function hideVRInterface() {
-            if (vrInterface) {
-                vrInterface.classList.remove('visible');
+            if (globals.vrInterface) {
+                globals.vrInterface.classList.remove('visible');
                 document.getElementById('vrCursor').classList.remove('visible');
                 document.getElementById('vrControlsPanel').classList.remove('visible');
             }
@@ -876,7 +878,7 @@
             if (!camera) return;
 
             function updateCursor() {
-                if (!isVRMode) return;
+                if (!globals.isVRMode) return;
 
                 const cursor = document.getElementById('vrCursor');
                 const rotation = camera.getAttribute('rotation');
@@ -900,7 +902,7 @@
                     }
                 }
 
-                if (isVRMode) {
+                if (globals.isVRMode) {
                     requestAnimationFrame(updateCursor);
                 }
             }
@@ -910,54 +912,48 @@
         }
 
         function togglePlay() {
-            if (!vrVideo) return;
+            if (!globals.vrVideo) return;
 
             try {
-                if (vrVideo.paused) {
-                    vrVideo.play()
+                if (globals.vrVideo.paused) {
+                    globals.vrVideo.play()
                         .then(() => {
                             const icon = document.querySelector('#playPauseBtn i');
                             if (icon) icon.textContent = 'pause';
                         })
                         .catch(error => {
                             console.error('Error playing video:', error);
-                            showError('Failed to play video');
+                            utils.showError('Failed to play video');
                         });
                 } else {
-                    vrVideo.pause();
+                    globals.vrVideo.pause();
                     const icon = document.querySelector('#playPauseBtn i');
                     if (icon) icon.textContent = 'play_arrow';
                 }
             } catch (error) {
                 console.error('Error in togglePlay:', error);
-                showError('Failed to toggle video playback');
+                utils.showError('Failed to toggle video playback');
             }
         }
 
         function updateProgress() {
-            if (!vrVideo) return;
+            if (!globals.vrVideo) return;
 
             const progressFill = document.getElementById('progressFill');
             const timeDisplay = document.getElementById('timeDisplay');
 
             if (progressFill && timeDisplay) {
-                const progress = (vrVideo.currentTime / vrVideo.duration) * 100;
+                const progress = (globals.vrVideo.currentTime / globals.vrVideo.duration) * 100;
                 progressFill.style.width = `${progress}%`;
 
-                const currentTime = formatTime(vrVideo.currentTime);
-                const duration = formatTime(vrVideo.duration);
+                const currentTime = utils.formatTime(globals.vrVideo.currentTime);
+                const duration = utils.formatTime(globals.vrVideo.duration);
                 timeDisplay.textContent = `${currentTime} / ${duration}`;
             }
 
-            if (isVRMode) {
+            if (globals.isVRMode) {
                 requestAnimationFrame(updateProgress);
             }
-        }
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            seconds = Math.floor(seconds % 60);
-            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
     </script>
 </body>

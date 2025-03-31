@@ -418,10 +418,15 @@
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 10000;
+            display: none; /* Hide by default */
         }
         .vr-cursor.hover {
             transform: translate(-50%, -50%) scale(1.2);
             border-color: #00FF9D;
+        }
+        /* Show cursor only in VR mode */
+        .a-fullscreen .vr-cursor {
+            display: block;
         }
         .top-controls {
             position: fixed;
@@ -703,6 +708,20 @@
             </a-plane>
         </a-entity>
 
+        <!-- Single VR Cursor Entity -->
+        <a-entity id="vrCursor"
+                  position="0 0 -2"
+                  geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                  material="color: white; shader: flat; opacity: 0.8"
+                  raycaster="objects: .clickable"
+                  cursor="fuse: false"
+                  visible="false">
+        </a-entity>
+
+        <!-- Camera without cursor -->
+        <a-camera id="camera" position="0 1.6 0" look-controls="reverseMouseDrag: true" wasd-controls="enabled: false">
+        </a-camera>
+
         <!-- VR UI Elements -->
         <a-entity id="vrUI" position="0 0 -2">
             <!-- Exit Button (Top Left) - Green Circle -->
@@ -824,25 +843,7 @@
                     </a-entity>
                 </a-plane>
             </a-entity>
-
-            <!-- Center Cursor -->
-            <a-entity id="centerCursor"
-                      geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
-                      material="color: white; shader: flat; opacity: 0.8"
-                      position="0 0 0">
-            </a-entity>
         </a-entity>
-
-        <!-- Camera Setup -->
-        <a-camera id="camera" position="0 1.6 0" look-controls="reverseMouseDrag: true" wasd-controls="enabled: false">
-            <a-entity id="cursor"
-                      cursor="fuse: false; rayOrigin: mouse;"
-                      position="0 0 -1"
-                      geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-                      material="color: white; shader: flat; opacity: 0.8"
-                      raycaster="objects: .clickable">
-            </a-entity>
-        </a-camera>
     </a-scene>
 
     <div id="vrInterface" class="vr-interface">
@@ -1667,6 +1668,37 @@
 
         // Add click listener to show controls
         document.querySelector('.clickable-video').addEventListener('click', showControls);
+
+        // Update cursor management
+        AFRAME.registerComponent('cursor-manager', {
+            init: function() {
+                const vrCursor = document.querySelector('#vrCursor');
+                
+                // Show cursor only in VR mode
+                this.el.addEventListener('enter-vr', () => {
+                    vrCursor.setAttribute('visible', true);
+                });
+                
+                this.el.addEventListener('exit-vr', () => {
+                    vrCursor.setAttribute('visible', false);
+                });
+                
+                // Handle cursor interactions
+                vrCursor.addEventListener('mouseenter', (evt) => {
+                    const targetEl = evt.detail.intersectedEl;
+                    if (targetEl.classList.contains('clickable')) {
+                        vrCursor.setAttribute('material', 'color', '#00FF9D');
+                    }
+                });
+                
+                vrCursor.addEventListener('mouseleave', () => {
+                    vrCursor.setAttribute('material', 'color', 'white');
+                });
+            }
+        });
+
+        // Add cursor manager to scene
+        document.querySelector('a-scene').setAttribute('cursor-manager', '');
     </script>
 </body>
 </html>

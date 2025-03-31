@@ -556,7 +556,10 @@
                    preload="auto"
                    crossorigin="anonymous"
                    playsinline
-                   webkit-playsinline>
+                   webkit-playsinline
+                   x5-video-player-type="h5"
+                   x5-video-player-fullscreen="true"
+                   x5-video-orientation="landscape">
             </video>
             <img id="thumb1" src="https://img.youtube.com/vi/VIDEO_ID_1/mqdefault.jpg" crossorigin="anonymous">
             <img id="thumb2" src="https://img.youtube.com/vi/VIDEO_ID_2/mqdefault.jpg" crossorigin="anonymous">
@@ -1444,42 +1447,57 @@
 
         AFRAME.registerComponent('play-pause', {
             init: function() {
-                this.el.addEventListener('click', function() {
-                    const video = document.getElementById('vrVideo');
-                    const text = this.querySelector('a-text');
-                    
+                const video = document.querySelector('#vrVideo');
+                const icon = this.querySelector('#playPauseIcon');
+                
+                this.el.addEventListener('click', (evt) => {
+                    evt.stopPropagation();
                     if (video.paused) {
-                        video.play();
-                        text.setAttribute('value', 'Pause');
+                        video.play().then(() => {
+                            icon.setAttribute('value', '⏸');
+                        }).catch(err => {
+                            console.warn('Play failed:', err);
+                        });
                     } else {
                         video.pause();
-                        text.setAttribute('value', 'Play');
+                        icon.setAttribute('value', '▶');
                     }
+                    showControls(); // Reset timeout on interaction
                 });
             }
         });
 
         AFRAME.registerComponent('progress-control', {
             init: function() {
-                const preview = document.querySelector('#videoPreview');
-                const previewTime = document.querySelector('#previewTime');
+                const video = document.querySelector('#vrVideo');
+                const progressFill = document.querySelector('#progressFill');
+                const timeDisplay = document.querySelector('#timeDisplay');
                 
-                this.el.addEventListener('mouseenter', function() {
-                    preview.setAttribute('visible', true);
-                });
-                
-                this.el.addEventListener('mouseleave', function() {
-                    preview.setAttribute('visible', false);
-                });
-                
-                this.el.addEventListener('mousemove', function(evt) {
+                this.el.addEventListener('click', (evt) => {
+                    evt.stopPropagation();
                     const bounds = this.getAttribute('geometry');
                     const x = evt.detail.intersection.point.x;
                     const ratio = (x + bounds.width/2) / bounds.width;
-                    const time = ratio * document.querySelector('#vrVideo').duration;
-                    
-                    preview.setAttribute('position', `${x} -0.5 -1`);
-                    previewTime.setAttribute('value', formatTime(time));
+                    video.currentTime = Math.max(0, Math.min(1, ratio)) * video.duration;
+                    showControls(); // Reset timeout on interaction
+                });
+
+                // Update progress bar
+                video.addEventListener('timeupdate', () => {
+                    const progress = video.currentTime / video.duration;
+                    progressFill.setAttribute('geometry', {
+                        primitive: 'plane',
+                        width: progress * 1.6,
+                        height: 0.05
+                    });
+                    progressFill.setAttribute('position', {
+                        x: -0.8 + (progress * 1.6) / 2,
+                        y: 0,
+                        z: 0.001
+                    });
+                    timeDisplay.setAttribute('value', 
+                        `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`
+                    );
                 });
             }
         });
@@ -1655,13 +1673,14 @@
         // Auto-hide controls after inactivity
         let controlsTimeout;
         function showControls() {
-            const videoControls = document.querySelector('#videoControls');
-            videoControls.setAttribute('visible', true);
+            const controls = document.querySelector('#videoControls');
+            controls.setAttribute('visible', true);
             
+            // Reset timeout
             clearTimeout(controlsTimeout);
             controlsTimeout = setTimeout(() => {
                 if (!document.querySelector('#settingsPanel').getAttribute('visible')) {
-                    videoControls.setAttribute('visible', false);
+                    controls.setAttribute('visible', false);
                 }
             }, 3000);
         }

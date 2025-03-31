@@ -325,7 +325,6 @@
             height: 100%;
             pointer-events: none;
             z-index: 9999;
-            display: none;
         }
         .vr-interface.visible {
             display: block;
@@ -412,18 +411,17 @@
             position: fixed;
             top: 50%;
             left: 50%;
-            width: 12px;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.8);
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 10000;
-            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         }
         .vr-cursor.hover {
-            transform: translate(-50%, -50%) scale(1.5);
-            background: #ff0000;
+            transform: translate(-50%, -50%) scale(1.2);
+            border-color: #00FF9D;
         }
         .top-controls {
             position: fixed;
@@ -514,6 +512,17 @@
         .vr-touch-overlay.active {
             display: block;
         }
+        .menu-item:hover {
+            color: #00FF9D;
+        }
+        /* Add styles for video thumbnails */
+        .video-thumb {
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .video-thumb:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -544,80 +553,296 @@
                    playsinline
                    webkit-playsinline>
             </video>
+            <img id="thumb1" src="https://img.youtube.com/vi/VIDEO_ID_1/mqdefault.jpg" crossorigin="anonymous">
+            <img id="thumb2" src="https://img.youtube.com/vi/VIDEO_ID_2/mqdefault.jpg" crossorigin="anonymous">
+            <img id="thumb3" src="https://img.youtube.com/vi/VIDEO_ID_3/mqdefault.jpg" crossorigin="anonymous">
         </a-assets>
 
-        <!-- Video sphere with correct orientation -->
         <a-videosphere id="videoSphere" 
                       src="#vrVideo"
                       rotation="180 0 180"
                       class="clickable-video">
         </a-videosphere>
 
-        <!-- VR Controls that appear in both eyes -->
-        <a-entity id="vrControlsContainer" position="0 0 -2">
-            <!-- Background panel for better visibility -->
-            <a-plane id="controlsBackground"
-                     position="0 1.5 0"
-                     width="1"
-                     height="0.4"
-                     color="#000000"
-                     opacity="0.7"
-                     visible="false">
+        <!-- Left Panel - Video Info and Comments -->
+        <a-entity id="leftPanel" 
+                  position="-2 1.6 -1.5" 
+                  rotation="0 30 0" 
+                  panel-mode
+                  visible="false">
+            <a-plane width="1.5" height="2" color="#000000" opacity="0.9">
+                <!-- Video Title -->
+                <a-text value="VR Roller Coaster Experience" 
+                        position="-0.7 0.9 0.01" 
+                        scale="0.2 0.2 0.2" 
+                        color="white"
+                        wrap-count="25">
+                </a-text>
                 
-                <!-- Play/Pause Button -->
-                <a-entity id="playPauseButton"
-                          position="-0.3 0 0.01"
-                          geometry="primitive: circle; radius: 0.1"
-                          material="color: white; opacity: 0.9"
-                          class="clickable"
-                          play-pause>
-                    <a-text value="Play"
-                            align="center"
-                            position="0 0 0.01"
-                            scale="0.2 0.2 0.2"
-                            color="black">
-                    </a-text>
-                </a-entity>
+                <!-- Video Description -->
+                <a-text value="Experience the thrill of the world's longest wooden roller coaster in stunning VR 360°!" 
+                        position="-0.7 0.7 0.01" 
+                        scale="0.15 0.15 0.15" 
+                        color="#CCCCCC"
+                        wrap-count="35">
+                </a-text>
 
-                <!-- Progress Bar -->
-                <a-entity id="progressBarContainer"
-                          position="0.2 0 0.01">
-                    <a-plane id="progressBar"
-                             width="0.4"
-                             height="0.05"
-                             color="#333333"
-                             class="clickable"
-                             progress-control>
-                        <a-plane id="progressIndicator"
-                                 width="0"
-                                 height="0.05"
-                                 color="red"
-                                 position="-0.2 0 0.001">
-                        </a-plane>
-                    </a-plane>
-                    <a-text id="timeDisplay"
-                            value="0:00 / 0:00"
-                            align="center"
-                            position="0 -0.1 0"
-                            scale="0.15 0.15 0.15"
-                            color="white">
+                <!-- Comments Section -->
+                <a-text value="Comments" 
+                        position="-0.7 0.4 0.01" 
+                        scale="0.2 0.2 0.2" 
+                        color="white">
+                </a-text>
+                <a-entity id="commentsContainer" 
+                          position="-0.7 0.2 0.01">
+                    <!-- Sample Comments -->
+                    <a-text value="Amazing ride! Can't wait to try it in person!" 
+                            position="0 0 0" 
+                            scale="0.12 0.12 0.12" 
+                            color="#CCCCCC"
+                            wrap-count="40">
+                    </a-text>
+                    <a-text value="The VR experience is so realistic!" 
+                            position="0 -0.2 0" 
+                            scale="0.12 0.12 0.12" 
+                            color="#CCCCCC"
+                            wrap-count="40">
                     </a-text>
                 </a-entity>
             </a-plane>
         </a-entity>
 
-        <!-- Camera rig -->
-        <a-entity id="cameraRig">
-            <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls="enabled: false">
-                <a-entity id="cursor"
-                          cursor="fuse: false; rayOrigin: mouse;"
-                          position="0 0 -1"
-                          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-                          material="color: white; shader: flat; opacity: 0.8"
-                          raycaster="objects: .clickable">
+        <!-- Right Panel - Related Videos -->
+        <a-entity id="rightPanel" 
+                  position="2 1.6 -1.5" 
+                  rotation="0 -30 0" 
+                  panel-mode
+                  visible="false">
+            <a-plane width="1.5" height="2" color="#000000" opacity="0.9">
+                <a-text value="Related Videos" 
+                        position="-0.7 0.9 0.01" 
+                        scale="0.2 0.2 0.2" 
+                        color="white">
+                </a-text>
+                
+                <!-- Related Videos Grid -->
+                <a-entity id="relatedVideosGrid" position="-0.7 0.5 0.01">
+                    <!-- Video Thumbnails -->
+                    <a-image src="#thumb1" 
+                             width="0.4" 
+                             height="0.225" 
+                             position="0 0 0" 
+                             class="clickable video-thumb">
+                    </a-image>
+                    <a-text value="Mega Coaster VR Experience" 
+                            position="0.45 0 0" 
+                            scale="0.1 0.1 0.1" 
+                            color="#CCCCCC"
+                            wrap-count="20">
+                    </a-text>
+
+                    <a-image src="#thumb2" 
+                             width="0.4" 
+                             height="0.225" 
+                             position="0 -0.3 0" 
+                             class="clickable video-thumb">
+                    </a-image>
+                    <a-text value="Space Mountain VR Ride" 
+                            position="0.45 -0.3 0" 
+                            scale="0.1 0.1 0.1" 
+                            color="#CCCCCC"
+                            wrap-count="20">
+                    </a-text>
+
+                    <a-image src="#thumb3" 
+                             width="0.4" 
+                             height="0.225" 
+                             position="0 -0.6 0" 
+                             class="clickable video-thumb">
+                    </a-image>
+                    <a-text value="Ultimate VR Theme Park Tour" 
+                            position="0.45 -0.6 0" 
+                            scale="0.1 0.1 0.1" 
+                            color="#CCCCCC"
+                            wrap-count="20">
+                    </a-text>
                 </a-entity>
-            </a-camera>
+            </a-plane>
         </a-entity>
+
+        <!-- Panel Mode Toggle Button -->
+        <a-entity id="panelModeButton"
+                  position="0.8 0.6 0"
+                  geometry="primitive: circle; radius: 0.1"
+                  material="color: #FFFFFF; opacity: 0.5"
+                  class="clickable vr-button"
+                  panel-mode-toggle>
+            <a-text value="[]"
+                    align="center"
+                    position="0 0 0.01"
+                    scale="0.3 0.3 0.3"
+                    color="white">
+            </a-text>
+        </a-entity>
+
+        <!-- Video Preview on Progress Bar Hover -->
+        <a-entity id="videoPreview"
+                  visible="false"
+                  position="0 -0.5 -1">
+            <a-plane width="0.4" 
+                     height="0.225" 
+                     color="#000000" 
+                     opacity="0.9">
+                <a-text id="previewTime"
+                        value="0:00"
+                        align="center"
+                        position="0 -0.15 0.01"
+                        scale="0.1 0.1 0.1"
+                        color="white">
+                </a-text>
+            </a-plane>
+        </a-entity>
+
+        <!-- VR UI Elements -->
+        <a-entity id="vrUI" position="0 0 -2">
+            <!-- Exit Button (Top Left) - Green Circle -->
+            <a-entity id="exitButton"
+                      position="-0.8 0.8 0"
+                      geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2"
+                      material="color: #00FF9D; opacity: 0.9; shader: flat"
+                      class="clickable vr-button"
+                      exit-vr>
+                <a-entity
+                    geometry="primitive: plane; width: 0.15; height: 0.15"
+                    material="color: #00FF9D; opacity: 0.9; shader: flat"
+                    position="0 0 0"
+                    rotation="0 0 45">
+                </a-entity>
+                <a-entity
+                    geometry="primitive: plane; width: 0.15; height: 0.15"
+                    material="color: #00FF9D; opacity: 0.9; shader: flat"
+                    position="0 0 0"
+                    rotation="0 0 -45">
+                </a-entity>
+            </a-entity>
+
+            <!-- Settings Button (Top Right) -->
+            <a-entity id="settingsButton"
+                      position="0.8 0.8 0"
+                      geometry="primitive: circle; radius: 0.1"
+                      material="color: #FFFFFF; opacity: 0.5"
+                      class="clickable vr-button"
+                      settings-toggle>
+                <a-text value="⚙"
+                        align="center"
+                        position="0 0 0.01"
+                        scale="0.3 0.3 0.3"
+                        color="white">
+                </a-text>
+            </a-entity>
+
+            <!-- Video Controls (Bottom) -->
+            <a-entity id="videoControls" position="0 -0.8 0" visible="false">
+                <!-- Previous Video -->
+                <a-entity position="-0.6 0 0"
+                          geometry="primitive: circle; radius: 0.08"
+                          material="color: white; opacity: 0.8"
+                          class="clickable vr-button"
+                          previous-video>
+                    <a-text value="⏮" align="center" position="0 0 0.01" scale="0.2 0.2 0.2" color="black"></a-text>
+                </a-entity>
+
+                <!-- Play/Pause -->
+                <a-entity position="-0.3 0 0"
+                          geometry="primitive: circle; radius: 0.1"
+                          material="color: white; opacity: 0.8"
+                          class="clickable vr-button"
+                          play-pause>
+                    <a-text value="⏵" align="center" position="0 0 0.01" scale="0.3 0.3 0.3" color="black"></a-text>
+                </a-entity>
+
+                <!-- Progress Bar -->
+                <a-entity position="0.2 0 0"
+                          geometry="primitive: plane; width: 0.8; height: 0.05"
+                          material="color: #333333; opacity: 0.8"
+                          class="clickable"
+                          progress-control>
+                    <a-entity id="progressFill"
+                              geometry="primitive: plane; width: 0; height: 0.05"
+                              material="color: red"
+                              position="-0.4 0 0.001">
+                    </a-entity>
+                </a-entity>
+
+                <!-- Next Video -->
+                <a-entity position="0.6 0 0"
+                          geometry="primitive: circle; radius: 0.08"
+                          material="color: white; opacity: 0.8"
+                          class="clickable vr-button"
+                          next-video>
+                    <a-text value="⏭" align="center" position="0 0 0.01" scale="0.2 0.2 0.2" color="black"></a-text>
+                </a-entity>
+            </a-entity>
+
+            <!-- Settings Panel -->
+            <a-entity id="settingsPanel" position="1.5 0 0" rotation="0 -30 0" visible="false">
+                <a-plane width="1" height="1.5" color="#000000" opacity="0.9">
+                    <a-text value="Settings" position="-0.45 0.65 0" scale="0.2 0.2 0.2" color="white"></a-text>
+                    
+                    <!-- Quality Settings -->
+                    <a-entity position="-0.45 0.4 0" class="clickable menu-item" quality-selector>
+                        <a-text value="Quality: " scale="0.15 0.15 0.15" color="white"></a-text>
+                        <a-text id="qualityValue" value="Auto" position="0.4 0 0" scale="0.15 0.15 0.15" color="#00FF9D"></a-text>
+                    </a-entity>
+
+                    <!-- Curved Screen Toggle -->
+                    <a-entity position="-0.45 0.2 0" class="clickable menu-item" curved-screen-toggle>
+                        <a-text value="Curved Screen: " scale="0.15 0.15 0.15" color="white"></a-text>
+                        <a-text id="curvedValue" value="Off" position="0.4 0 0" scale="0.15 0.15 0.15" color="#00FF9D"></a-text>
+                    </a-entity>
+
+                    <!-- Captions Toggle -->
+                    <a-entity position="-0.45 0 0" class="clickable menu-item" captions-toggle>
+                        <a-text value="Captions: " scale="0.15 0.15 0.15" color="white"></a-text>
+                        <a-text id="captionsValue" value="Off" position="0.4 0 0" scale="0.15 0.15 0.15" color="#00FF9D"></a-text>
+                    </a-entity>
+
+                    <!-- Volume Control -->
+                    <a-entity position="-0.45 -0.2 0">
+                        <a-text value="Volume: " scale="0.15 0.15 0.15" color="white"></a-text>
+                        <a-entity position="0.2 0 0"
+                                  geometry="primitive: plane; width: 0.4; height: 0.05"
+                                  material="color: #333333"
+                                  class="clickable"
+                                  volume-control>
+                            <a-entity id="volumeFill"
+                                      geometry="primitive: plane; width: 0.4; height: 0.05"
+                                      material="color: #00FF9D"
+                                      position="0 0 0.001">
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                </a-plane>
+            </a-entity>
+
+            <!-- Center Cursor -->
+            <a-entity id="centerCursor"
+                      geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
+                      material="color: white; shader: flat; opacity: 0.8"
+                      position="0 0 0">
+            </a-entity>
+        </a-entity>
+
+        <!-- Camera Setup -->
+        <a-camera id="camera" position="0 1.6 0" look-controls="reverseMouseDrag: true" wasd-controls="enabled: false">
+            <a-entity id="cursor"
+                      cursor="fuse: false; rayOrigin: mouse;"
+                      position="0 0 -1"
+                      geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                      material="color: white; shader: flat; opacity: 0.8"
+                      raycaster="objects: .clickable">
+            </a-entity>
+        </a-camera>
     </a-scene>
 
     <div id="vrInterface" class="vr-interface">
@@ -851,6 +1076,10 @@
                 } catch (playError) {
                     console.warn('Auto-play failed:', playError);
                 }
+
+                // Initialize panels in hidden state
+                document.querySelector('#leftPanel').setAttribute('visible', false);
+                document.querySelector('#rightPanel').setAttribute('visible', false);
             } catch (error) {
                 console.error('Error entering VR:', error);
                 utils.showError(error.message || 'Failed to enter VR mode');
@@ -1072,10 +1301,10 @@
 
         function setupVRControls() {
             const vrPlayPauseBtn = document.getElementById('playPauseButton');
-            const vrProgressBar = document.getElementById('progressBarContainer');
-            const vrProgressFill = document.getElementById('progressIndicator');
+            const vrProgressBar = document.getElementById('progressBar');
+            const vrProgressFill = document.getElementById('progressFill');
             const vrTimeDisplay = document.getElementById('timeDisplay');
-            const vrUI = document.getElementById('vrControlsContainer');
+            const vrUI = document.getElementById('vrUI');
 
             if (!vrPlayPauseBtn || !vrProgressBar || !vrProgressFill || !vrTimeDisplay || !vrUI) {
                 console.error('VR controls not found');
@@ -1153,7 +1382,7 @@
         }
 
         function toggleVRControls() {
-            const vrUI = document.getElementById('vrControlsContainer');
+            const vrUI = document.getElementById('vrUI');
             if (!vrUI) return;
 
             if (vrUI.getAttribute('visible') === false) {
@@ -1170,7 +1399,7 @@
             if (!globals.isVRMode) return;
 
             const camera = document.getElementById('camera');
-            const vrUI = document.getElementById('vrControlsContainer');
+            const vrUI = document.getElementById('vrUI');
             
             if (camera && vrUI && vrUI.getAttribute('visible')) {
                 const cameraRotation = camera.getAttribute('rotation');
@@ -1193,11 +1422,31 @@
         }
 
         // Register custom A-Frame components
+        AFRAME.registerComponent('exit-vr', {
+            init: function() {
+                this.el.addEventListener('click', function() {
+                    const scene = document.getElementById('vrScene');
+                    const initialUI = document.querySelector('.initialUI');
+                    
+                    // Hide VR scene and show landing page
+                    scene.style.display = 'none';
+                    initialUI.style.display = 'block';
+                    
+                    // Pause video
+                    const video = document.getElementById('vrVideo');
+                    if (video) {
+                        video.pause();
+                    }
+                });
+            }
+        });
+
         AFRAME.registerComponent('play-pause', {
             init: function() {
                 this.el.addEventListener('click', function() {
                     const video = document.getElementById('vrVideo');
                     const text = this.querySelector('a-text');
+                    
                     if (video.paused) {
                         video.play();
                         text.setAttribute('value', 'Pause');
@@ -1211,36 +1460,47 @@
 
         AFRAME.registerComponent('progress-control', {
             init: function() {
-                this.el.addEventListener('click', function(evt) {
-                    const video = document.getElementById('vrVideo');
-                    const progressBar = this;
-                    const progressIndicator = document.getElementById('progressIndicator');
-                    
-                    // Calculate click position relative to progress bar
-                    const bounds = progressBar.getAttribute('geometry');
+                const preview = document.querySelector('#videoPreview');
+                const previewTime = document.querySelector('#previewTime');
+                
+                this.el.addEventListener('mouseenter', function() {
+                    preview.setAttribute('visible', true);
+                });
+                
+                this.el.addEventListener('mouseleave', function() {
+                    preview.setAttribute('visible', false);
+                });
+                
+                this.el.addEventListener('mousemove', function(evt) {
+                    const bounds = this.getAttribute('geometry');
                     const x = evt.detail.intersection.point.x;
                     const ratio = (x + bounds.width/2) / bounds.width;
+                    const time = ratio * document.querySelector('#vrVideo').duration;
                     
-                    // Update video time
-                    video.currentTime = Math.max(0, Math.min(1, ratio)) * video.duration;
+                    preview.setAttribute('position', `${x} -0.5 -1`);
+                    previewTime.setAttribute('value', formatTime(time));
                 });
             }
         });
 
-        // Function to update progress bar and time display
-        function updateProgress() {
+        // Function to update progress and time display
+        function updateVRControls() {
             const video = document.getElementById('vrVideo');
-            const progressIndicator = document.getElementById('progressIndicator');
+            const progressFill = document.getElementById('progressFill');
             const timeDisplay = document.getElementById('timeDisplay');
             
-            if (!video || !progressIndicator || !timeDisplay) return;
+            if (!video || !progressFill || !timeDisplay) return;
             
             const progress = video.currentTime / video.duration;
             
             // Update progress bar
-            progressIndicator.setAttribute('width', progress * 0.4);
-            progressIndicator.setAttribute('position', {
-                x: -0.2 + (progress * 0.4) / 2,
+            progressFill.setAttribute('geometry', {
+                primitive: 'plane',
+                width: progress,
+                height: 0.05
+            });
+            progressFill.setAttribute('position', {
+                x: -0.5 + progress/2,
                 y: 0,
                 z: 0.001
             });
@@ -1250,7 +1510,7 @@
             const duration = formatTime(video.duration);
             timeDisplay.setAttribute('value', `${currentTime} / ${duration}`);
             
-            requestAnimationFrame(updateProgress);
+            requestAnimationFrame(updateVRControls);
         }
 
         function formatTime(seconds) {
@@ -1259,66 +1519,154 @@
             return `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        // Function to toggle controls visibility
-        function toggleControls() {
-            const background = document.getElementById('controlsBackground');
-            const isVisible = background.getAttribute('visible');
-            background.setAttribute('visible', !isVisible);
+        // Add new component registrations
+        AFRAME.registerComponent('settings-toggle', {
+            init: function() {
+                this.el.addEventListener('click', function() {
+                    const settingsPanel = document.querySelector('#settingsPanel');
+                    const isVisible = settingsPanel.getAttribute('visible');
+                    settingsPanel.setAttribute('visible', !isVisible);
+                });
+            }
+        });
+
+        AFRAME.registerComponent('quality-selector', {
+            init: function() {
+                const qualities = ['Auto', '2160p', '1440p', '1080p', '720p', '480p', '360p'];
+                let currentIndex = 0;
+
+                this.el.addEventListener('click', function() {
+                    currentIndex = (currentIndex + 1) % qualities.length;
+                    const qualityText = document.querySelector('#qualityValue');
+                    qualityText.setAttribute('value', qualities[currentIndex]);
+                });
+            }
+        });
+
+        AFRAME.registerComponent('curved-screen-toggle', {
+            init: function() {
+                let isCurved = false;
+                const videoSphere = document.querySelector('#videoSphere');
+
+                this.el.addEventListener('click', function() {
+                    isCurved = !isCurved;
+                    const curvedText = document.querySelector('#curvedValue');
+                    curvedText.setAttribute('value', isCurved ? 'On' : 'Off');
+                    
+                    // Adjust video sphere geometry for curved effect
+                    if (isCurved) {
+                        videoSphere.setAttribute('geometry', 'radius', 10);
+                        videoSphere.setAttribute('geometry', 'segmentsHeight', 32);
+                    } else {
+                        videoSphere.setAttribute('geometry', 'radius', 5000);
+                        videoSphere.setAttribute('geometry', 'segmentsHeight', 16);
+                    }
+                });
+            }
+        });
+
+        AFRAME.registerComponent('captions-toggle', {
+            init: function() {
+                let captionsEnabled = false;
+
+                this.el.addEventListener('click', function() {
+                    captionsEnabled = !captionsEnabled;
+                    const captionsText = document.querySelector('#captionsValue');
+                    captionsText.setAttribute('value', captionsEnabled ? 'On' : 'Off');
+                    
+                    // Toggle captions visibility
+                    const video = document.querySelector('#vrVideo');
+                    if (video.textTracks.length > 0) {
+                        video.textTracks[0].mode = captionsEnabled ? 'showing' : 'hidden';
+                    }
+                });
+            }
+        });
+
+        AFRAME.registerComponent('volume-control', {
+            init: function() {
+                const video = document.querySelector('#vrVideo');
+                const volumeFill = document.querySelector('#volumeFill');
+
+                this.el.addEventListener('click', function(evt) {
+                    const bounds = this.getAttribute('geometry');
+                    const x = evt.detail.intersection.point.x;
+                    const volume = Math.max(0, Math.min(1, (x + bounds.width/2) / bounds.width));
+                    
+                    video.volume = volume;
+                    volumeFill.setAttribute('scale', `${volume} 1 1`);
+                });
+            }
+        });
+
+        // Add new component for panel mode
+        AFRAME.registerComponent('panel-mode-toggle', {
+            init: function() {
+                let panelMode = false;
+                
+                this.el.addEventListener('click', function() {
+                    panelMode = !panelMode;
+                    const leftPanel = document.querySelector('#leftPanel');
+                    const rightPanel = document.querySelector('#rightPanel');
+                    
+                    leftPanel.setAttribute('visible', panelMode);
+                    rightPanel.setAttribute('visible', panelMode);
+                    
+                    // Adjust video sphere position in panel mode
+                    const videoSphere = document.querySelector('#videoSphere');
+                    if (panelMode) {
+                        videoSphere.setAttribute('position', '0 0 -2');
+                        videoSphere.setAttribute('scale', '0.7 0.7 0.7');
+                    } else {
+                        videoSphere.setAttribute('position', '0 0 0');
+                        videoSphere.setAttribute('scale', '1 1 1');
+                    }
+                });
+            }
+        });
+
+        // Add video thumbnail hover effects
+        document.querySelectorAll('.video-thumb').forEach(thumb => {
+            thumb.addEventListener('mouseenter', function() {
+                this.setAttribute('scale', '1.1 1.1 1.1');
+            });
+            
+            thumb.addEventListener('mouseleave', function() {
+                this.setAttribute('scale', '1 1 1');
+            });
+        });
+
+        // Add recenter view function
+        function recenterView() {
+            const camera = document.querySelector('#camera');
+            if (camera) {
+                camera.setAttribute('rotation', '0 0 0');
+            }
         }
 
-        // Setup touch controls for testing without VR headset
-        function setupTouchControls() {
-            const scene = document.getElementById('vrScene');
-            let lastTap = 0;
+        // Add keyboard listener for recentering (Space key)
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                recenterView();
+            }
+        });
 
-            scene.addEventListener('touchend', function(evt) {
-                const now = Date.now();
-                const timeDiff = now - lastTap;
-                
-                if (timeDiff < 300 && timeDiff > 0) {
-                    // Double tap detected
-                    toggleControls();
+        // Auto-hide controls after inactivity
+        let controlsTimeout;
+        function showControls() {
+            const videoControls = document.querySelector('#videoControls');
+            videoControls.setAttribute('visible', true);
+            
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                if (!document.querySelector('#settingsPanel').getAttribute('visible')) {
+                    videoControls.setAttribute('visible', false);
                 }
-                
-                lastTap = now;
-            });
+            }, 3000);
         }
 
-        // Initialize everything when video is ready
-        document.getElementById('vrVideo').addEventListener('loadedmetadata', function() {
-            updateProgress();
-            setupTouchControls();
-        });
-
-        // Update controls position to follow camera
-        function updateControlsPosition() {
-            const camera = document.getElementById('camera');
-            const controls = document.getElementById('vrControlsContainer');
-            
-            if (!camera || !controls) return;
-            
-            const rotation = camera.getAttribute('rotation');
-            const position = camera.getAttribute('position');
-            
-            controls.setAttribute('position', {
-                x: position.x,
-                y: position.y,
-                z: position.z - 2
-            });
-            
-            controls.setAttribute('rotation', {
-                x: 0,
-                y: rotation.y,
-                z: 0
-            });
-            
-            requestAnimationFrame(updateControlsPosition);
-        }
-
-        // Start position updates when entering VR
-        document.getElementById('vrScene').addEventListener('enter-vr', function() {
-            updateControlsPosition();
-        });
+        // Add click listener to show controls
+        document.querySelector('.clickable-video').addEventListener('click', showControls);
     </script>
 </body>
 </html>

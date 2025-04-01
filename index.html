@@ -19,6 +19,7 @@
             position: fixed;
         }
 
+        /* Initial UI */
         .initialUI {
             position: absolute;
             top: 50%;
@@ -61,6 +62,7 @@
             box-shadow: 0 5px 20px rgba(107, 72, 255, 0.6);
         }
 
+        /* Loading Indicator */
         .loading-indicator {
             position: fixed;
             top: 0;
@@ -93,6 +95,7 @@
             color: #fff;
         }
 
+        /* VR Interface */
         .vr-interface {
             position: fixed;
             width: 100%;
@@ -102,6 +105,7 @@
         }
         .vr-interface.visible { pointer-events: auto; }
 
+        /* Control Panel */
         .vr-controls-panel {
             position: fixed;
             bottom: 20px;
@@ -229,6 +233,28 @@
             transform: scale(1.1);
         }
 
+        .vr-cursor {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            border: 2px solid #6b48ff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10000;
+            background: rgba(107, 72, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+        .vr-cursor.hover {
+            width: 14px;
+            height: 14px;
+            background: rgba(107, 72, 255, 0.4);
+            border-color: #00ddeb;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .initialUI {
                 width: 90%;
@@ -277,8 +303,7 @@
                    crossorigin="anonymous"
                    playsinline
                    webkit-playsinline
-                   loop
-                   muted>
+                   loop>
             </video>
         </a-assets>
         <a-videosphere id="videoSphere" 
@@ -287,7 +312,8 @@
                       segments-height="64"
                       segments-width="64"
                       radius="10000"
-                      material="shader: flat; side: back; npot: true">
+                      material="shader: flat; side: back; npot: true"
+                      play="true">
         </a-videosphere>
         <a-entity id="cameraRig" position="0 1.6 0">
             <a-camera id="camera"
@@ -304,6 +330,7 @@
     </a-scene>
 
     <div id="vrInterface" class="vr-interface">
+        <div class="vr-cursor" id="vrCursor"></div>
         <div class="top-controls">
             <button class="top-button clickable" id="exitBtn"><i class="material-icons-round">close</i></button>
             <button class="top-button clickable" id="fullscreenBtn"><i class="material-icons-round">fullscreen</i></button>
@@ -337,8 +364,7 @@
             isVRMode: false,
             isFullscreen: false,
             controlsVisible: false,
-            lastInteraction: 0,
-            sceneLoaded: false
+            lastInteraction: 0
         };
 
         const utils = {
@@ -351,12 +377,11 @@
             },
             showError: (message) => {
                 console.error(message);
-                alert(message);
+                alert(message); // Simple error feedback
             }
         };
 
         async function initialize() {
-            console.log('Initializing...');
             globals.vrVideo = document.getElementById('vrVideo');
             globals.vrScene = document.getElementById('vrScene');
             globals.vrInterface = document.getElementById('vrInterface');
@@ -366,74 +391,42 @@
                 return;
             }
 
-            globals.vrScene.addEventListener('loaded', () => {
-                console.log('A-Frame scene loaded');
-                globals.sceneLoaded = true;
+            // Preload video
+            globals.vrVideo.addEventListener('canplay', () => {
+                console.log('Video can play');
             });
-
-            globals.vrVideo.addEventListener('loadeddata', () => console.log('Video data loaded'));
-            globals.vrVideo.addEventListener('error', (e) => console.error('Video error:', e));
-            globals.vrVideo.addEventListener('play', () => console.log('Video playing'));
 
             setupControls();
             globals.vrScene.addEventListener('enter-vr', () => {
-                console.log('Entered VR mode');
                 globals.isVRMode = true;
                 showControls();
                 updateUI();
             });
-            globals.vrScene.addEventListener('exit-vr', () => {
-                console.log('Exited VR mode');
-                hideControls();
-            });
+            globals.vrScene.addEventListener('exit-vr', hideControls);
         }
 
         async function enterVR() {
-            console.log('Entering VR...');
             utils.showLoading();
             document.querySelector('.initialUI').style.display = 'none';
             globals.vrScene.style.display = 'block';
 
             try {
-                await Promise.all([
-                    new Promise((resolve) => {
-                        if (globals.sceneLoaded) resolve();
-                        else globals.vrScene.addEventListener('loaded', resolve, { once: true });
-                    }),
-                    new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => reject(new Error('Video loading timeout')), 10000);
-                        globals.vrVideo.addEventListener('loadeddata', () => {
-                            console.log('Video loadeddata event');
-                            clearTimeout(timeout);
-                            resolve();
-                        }, { once: true });
-                        globals.vrVideo.addEventListener('error', (e) => {
-                            clearTimeout(timeout);
-                            reject(new Error('Video failed to load: ' + e.message));
-                        }, { once: true });
-                        globals.vrVideo.load();
-                    })
-                ]);
-
-                console.log('Scene and video ready, entering VR mode');
-                await globals.vrScene.enterVR();
-
-                await globals.vrVideo.play().catch(async (error) => {
-                    console.warn('Initial play failed:', error);
-                    globals.vrVideo.muted = true;
-                    await globals.vrVideo.play();
-                    setTimeout(() => {
-                        globals.vrVideo.muted = false;
-                        console.log('Unmuted after play');
-                    }, 1000);
+                // Wait for video to be ready
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Video loading timeout')), 10000);
+                    globals.vrVideo.addEventListener('canplay', () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    }, { once: true });
+                    globals.vrVideo.load(); // Ensure video starts loading
                 });
 
-                const videoSphere = document.getElementById('videoSphere');
-                if (videoSphere && videoSphere.components.material) {
-                    videoSphere.components.material.material.map.needsUpdate = true;
-                    console.log('Texture updated');
-                }
-
+                await globals.vrScene.enterVR();
+                await globals.vrVideo.play().catch(() => {
+                    // Fallback for autoplay restrictions
+                    globals.vrVideo.muted = true;
+                    return globals.vrVideo.play();
+                });
                 utils.hideLoading();
             } catch (error) {
                 utils.showError('VR entry failed: ' + error.message);
@@ -454,20 +447,15 @@
                 volume: document.getElementById('volumeSlider')
             };
 
-            controls.rewind?.addEventListener('click', () => {
-                globals.vrVideo.currentTime = Math.max(0, globals.vrVideo.currentTime - 10);
-                console.log('Rewind 10s');
-            });
-            controls.forward?.addEventListener('click', () => {
-                globals.vrVideo.currentTime = Math.min(globals.vrVideo.duration, globals.vrVideo.currentTime + 10);
-                console.log('Forward 10s');
-            });
+            controls.rewind?.addEventListener('click', () => globals.vrVideo.currentTime = Math.max(0, globals.vrVideo.currentTime - 10));
+            controls.forward?.addEventListener('click', () => globals.vrVideo.currentTime = Math.min(globals.vrVideo.duration, globals.vrVideo.currentTime + 10));
             controls.exit?.addEventListener('click', exitVR);
             controls.fullscreen?.addEventListener('click', toggleFullscreen);
             controls.mute?.addEventListener('click', toggleMute);
             controls.progress?.addEventListener('click', handleSeek);
             controls.volume?.addEventListener('click', handleVolume);
 
+            // Touch support
             controls.progress?.addEventListener('touchmove', handleTouchSeek);
             controls.volume?.addEventListener('touchmove', handleTouchVolume);
         }
@@ -476,7 +464,6 @@
             const rect = e.target.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
             globals.vrVideo.currentTime = ratio * globals.vrVideo.duration;
-            console.log('Seek to:', globals.vrVideo.currentTime);
         }
 
         function handleVolume(e) {
@@ -484,7 +471,6 @@
             const ratio = (e.clientX - rect.left) / rect.width;
             globals.vrVideo.volume = Math.max(0, Math.min(1, ratio));
             updateVolumeUI();
-            console.log('Volume set to:', globals.vrVideo.volume);
         }
 
         function handleTouchSeek(e) {
@@ -503,18 +489,16 @@
             globals.vrVideo.muted = !globals.vrVideo.muted;
             document.querySelector('#muteBtn i').textContent = globals.vrVideo.muted ? 'volume_off' : 'volume_up';
             updateVolumeUI();
-            console.log('Mute toggled:', globals.vrVideo.muted);
         }
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)?.();
+                document.documentElement.requestFullscreen?.() || document.documentElement.webkitRequestFullscreen?.();
                 document.querySelector('#fullscreenBtn i').textContent = 'fullscreen_exit';
             } else {
-                (document.exitFullscreen || document.webkitExitFullscreen)?.();
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.();
                 document.querySelector('#fullscreenBtn i').textContent = 'fullscreen';
             }
-            console.log('Fullscreen toggled');
         }
 
         function updateUI() {
@@ -525,10 +509,12 @@
             const camera = document.getElementById('camera');
             const controlsPanel = document.getElementById('vrControlsPanel');
 
+            // Update progress
             const progress = (globals.vrVideo.currentTime / globals.vrVideo.duration) * 100;
             progressFill.style.width = `${progress}%`;
             timeDisplay.textContent = `${utils.formatTime(globals.vrVideo.currentTime)} / ${utils.formatTime(globals.vrVideo.duration)}`;
 
+            // Follow camera
             const rotation = camera.getAttribute('rotation');
             controlsPanel.style.transform = `translate(-50%, 0) rotateY(${rotation.y}deg)`;
 
@@ -549,13 +535,11 @@
             setTimeout(() => {
                 if (Date.now() - globals.lastInteraction > 5000) hideControls();
             }, 5000);
-            console.log('Controls shown');
         }
 
         function hideControls() {
             document.getElementById('vrControlsPanel').classList.remove('visible');
             globals.controlsVisible = false;
-            console.log('Controls hidden');
         }
 
         function exitVR() {
@@ -564,7 +548,6 @@
             globals.vrVideo.pause();
             document.querySelector('.initialUI').style.display = 'block';
             globals.vrScene.style.display = 'none';
-            console.log('VR exited');
         }
 
         window.addEventListener('load', initialize);

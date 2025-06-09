@@ -256,236 +256,364 @@
       transform: scale(1.1);
       box-shadow: 0 6px 20px rgba(107, 72, 255, 0.5);
     }
-
-    /* --- HIDE A-FRAME CONTROLS (optional) --- */
-    a-scene {
-      width: 100%;
-      height: 100vh;
-      display: none;
-      z-index: 5000;
-      background: black;
-    }
-    a-scene.visible {
-      display: block;
-    }
-
   </style>
 </head>
 <body>
-
-  <!-- INITIAL UI with preview video -->
-  <div class="initialUI">
-    <h1>360° VR Video Preview</h1>
-    <video id="preview" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4" loop muted playsinline></video>
+  <!-- INITIAL UI -->
+  <div class="initialUI" id="initialUI">
+    <h1>VR Video Experience</h1>
+    <video
+      id="previewVideo"
+      src="https://cdn.jsdelivr.net/gh/nuovonaturale/vrvideos@latest/AUTUMN_ROAD_360_1.mp4"
+      controls
+      preload="metadata"
+      muted
+      playsinline
+      poster=""
+    ></video>
     <button id="enterVRBtn">Enter VR</button>
   </div>
 
-  <!-- Loading Indicator -->
+  <!-- LOADING INDICATOR -->
   <div class="loading-indicator" id="loadingIndicator">
     <div class="loading-spinner"></div>
-    <div class="loading-text">Loading VR Experience...</div>
+    <div class="loading-text">Loading VR Video...</div>
   </div>
 
-  <!-- A-Frame VR Scene -->
-  <a-scene id="vrScene" embedded vr-mode-ui="enabled: false" renderer="colorManagement: true; foveationLevel: 0;" class="">
-    <a-assets>
-      <video id="vrVideo" autoplay loop muted crossorigin="anonymous" playsinline webkit-playsinline preload="auto" src="https://storage.googleapis.com/vrvideo1/video1/VR%20360%20The%20Beast%20World's%20Longest%20Wooden%20Roller%20Coaster%20POV%20Kings%20Island%20Ohio.mp4"></video>
-    </a-assets>
+  <!-- VR SCENE -->
+  <a-scene
+    id="vrScene"
+    embedded
+    vr-mode-ui="enabled: false"
+    style="display:none; height: 100vh; width: 100vw; background-color: black;"
+  >
+    <a-sky color="#000"></a-sky>
 
-    <!-- 360 Video Sphere -->
-    <a-videosphere src="#vrVideo" rotation="0 -90 0"></a-videosphere>
+    <!-- Video Sphere -->
+    <a-videosphere
+      id="videoSphere"
+      src="#vrVideo"
+      rotation="0 180 0"
+    ></a-videosphere>
 
     <!-- Camera with look-controls -->
-    <a-entity id="camera" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+    <a-entity
+      id="cameraRig"
+      position="0 1.6 0"
+    >
+      <a-entity
+        camera
+        look-controls
+        wasd-controls-enabled="false"
+        position="0 0 0"
+      ></a-entity>
+    </a-entity>
   </a-scene>
 
-  <!-- VR Interface Overlay -->
-  <div class="vr-interface" id="vrInterface">
+  <!-- VR Video Element (hidden) -->
+  <video
+    id="vrVideo"
+    crossorigin="anonymous"
+    playsinline
+    webkit-playsinline
+    preload="auto"
+    muted
+    style="display:none"
+    src="https://cdn.jsdelivr.net/gh/nuovonaturale/vrvideos@latest/AUTUMN_ROAD_360_1.mp4"
+  ></video>
+
+  <!-- VR INTERFACE -->
+  <div class="vr-interface" id="vrInterface" style="display:none;">
     <div class="top-controls">
-      <button class="top-button" id="exitBtn" title="Exit VR">
+      <button class="top-button" id="exitVRBtn" title="Exit VR" aria-label="Exit VR">
         <span class="material-icons-round">close</span>
       </button>
-      <button class="top-button" id="fullscreenBtn" title="Toggle Fullscreen">
+      <button class="top-button" id="fullscreenBtn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
         <span class="material-icons-round">fullscreen</span>
       </button>
     </div>
 
-    <!-- VR Controls Panel -->
-    <div class="vr-controls-panel" id="vrControlsPanel" aria-label="VR Video Controls" role="region">
-      <div class="video-title" id="videoTitle">The Beast - Kings Island POV</div>
+    <div class="vr-controls-panel visible" id="vrControlsPanel">
+      <div class="video-title" id="videoTitle">AUTUMN ROAD 360 VR</div>
       <div class="controls-row">
-        <button class="vr-button" id="playPauseBtn" title="Play/Pause Video" aria-pressed="false">
+        <button class="vr-button" id="playPauseBtn" title="Play/Pause" aria-label="Play/Pause">
           <span class="material-icons-round" id="playPauseIcon">play_arrow</span>
         </button>
-
-        <div class="vr-progress-container" title="Seek Video">
-          <div class="vr-progress-bar" id="progressBar" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
-            <div class="vr-progress-fill" id="progressFill"></div>
-          </div>
-          <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+        <button class="vr-button" id="rewindBtn" title="Rewind 10s" aria-label="Rewind 10 seconds">
+          <span class="material-icons-round">replay_10</span>
+        </button>
+        <button class="vr-button" id="forwardBtn" title="Forward 10s" aria-label="Forward 10 seconds">
+          <span class="material-icons-round">forward_10</span>
+        </button>
+        <button class="vr-button" id="muteBtn" title="Mute/Unmute" aria-label="Mute/Unmute">
+          <span class="material-icons-round" id="muteIcon">volume_up</span>
+        </button>
+        <button class="vr-button" id="restartBtn" title="Restart Video" aria-label="Restart Video">
+          <span class="material-icons-round">restart_alt</span>
+        </button>
+      </div>
+      <div class="controls-row" style="justify-content: center; gap: 20px; flex-wrap: wrap;">
+        <div class="vr-progress-container" aria-label="Video progress">
+          <div class="vr-progress-bar" id="progressBar" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+          <div class="vr-progress-fill" id="progressFill"></div>
+          <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
         </div>
 
-        <div class="volume-container" title="Volume Controls">
-          <button class="vr-button" id="muteBtn" title="Mute/Unmute Video" aria-pressed="false">
-            <span class="material-icons-round" id="muteIcon">volume_up</span>
+        <div class="volume-container" aria-label="Volume control">
+          <button class="vr-button" id="volumeDownBtn" title="Volume Down" aria-label="Volume Down">
+            <span class="material-icons-round">volume_down</span>
           </button>
-          <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" aria-label="Volume slider" />
+          <div class="volume-slider" id="volumeSlider" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+            <div class="volume-fill" id="volumeFill"></div>
+          </div>
+          <button class="vr-button" id="volumeUpBtn" title="Volume Up" aria-label="Volume Up">
+            <span class="material-icons-round">volume_up</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // DOM references
-    const initialUI = document.querySelector('.initialUI');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const vrScene = document.getElementById('vrScene');
-    const vrInterface = document.getElementById('vrInterface');
-    const vrControlsPanel = document.getElementById('vrControlsPanel');
-    const vrVideo = document.getElementById('vrVideo');
-    const previewVideo = document.getElementById('preview');
-
     const enterVRBtn = document.getElementById('enterVRBtn');
-    const exitBtn = document.getElementById('exitBtn');
+    const exitVRBtn = document.getElementById('exitVRBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
-
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const playPauseIcon = document.getElementById('playPauseIcon');
+    const rewindBtn = document.getElementById('rewindBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const volumeDownBtn = document.getElementById('volumeDownBtn');
+    const volumeUpBtn = document.getElementById('volumeUpBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeFill = document.getElementById('volumeFill');
     const progressBar = document.getElementById('progressBar');
     const progressFill = document.getElementById('progressFill');
     const timeDisplay = document.getElementById('timeDisplay');
-    const muteBtn = document.getElementById('muteBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const initialUI = document.getElementById('initialUI');
+    const vrScene = document.getElementById('vrScene');
+    const vrInterface = document.getElementById('vrInterface');
+    const vrVideo = document.getElementById('vrVideo');
+    const playPauseIcon = document.getElementById('playPauseIcon');
     const muteIcon = document.getElementById('muteIcon');
-    const volumeSlider = document.getElementById('volumeSlider');
 
-    // Helper functions
+    // Utility functions
     function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
     }
 
-    function updateTimeDisplay() {
-      if (!vrVideo.duration || isNaN(vrVideo.duration)) {
-        timeDisplay.textContent = `0:00 / 0:00`;
-        return;
-      }
-      timeDisplay.textContent = `${formatTime(vrVideo.currentTime)} / ${formatTime(vrVideo.duration)}`;
-    }
-
-    function updatePlayPauseIcon() {
-      if (vrVideo.paused) {
-        playPauseIcon.textContent = 'play_arrow';
-        playPauseBtn.setAttribute('aria-pressed', 'false');
-      } else {
-        playPauseIcon.textContent = 'pause';
-        playPauseBtn.setAttribute('aria-pressed', 'true');
-      }
-    }
-
-    function updateVolumeUI() {
-      if (vrVideo.muted || vrVideo.volume === 0) {
-        muteIcon.textContent = 'volume_off';
-        muteBtn.setAttribute('aria-pressed', 'true');
-        volumeSlider.value = 0;
-      } else if (vrVideo.volume < 0.5) {
-        muteIcon.textContent = 'volume_down';
-        muteBtn.setAttribute('aria-pressed', 'false');
-        volumeSlider.value = vrVideo.volume;
-      } else {
-        muteIcon.textContent = 'volume_up';
-        muteBtn.setAttribute('aria-pressed', 'false');
-        volumeSlider.value = vrVideo.volume;
-      }
-    }
-
-    // Enter VR button click handler
-    enterVRBtn.addEventListener('click', () => {
-      initialUI.style.display = 'none';
+    // Enter VR handler
+    function enterVR() {
       loadingIndicator.classList.add('visible');
-
-      // Sync video currentTime from preview if needed
-      vrVideo.currentTime = previewVideo.currentTime || 0;
-
-      vrVideo.load();
+      vrVideo.muted = false;
+      vrVideo.currentTime = 0;
       vrVideo.play().then(() => {
-        loadingIndicator.classList.remove('visible');
-        vrScene.classList.add('visible');
+        initialUI.style.display = 'none';
+        vrScene.style.display = 'block';
+        vrInterface.style.display = 'block';
         vrInterface.classList.add('visible');
-        vrControlsPanel.classList.add('visible');
-        updatePlayPauseIcon();
-        updateVolumeUI();
-        updateTimeDisplay();
-      }).catch(err => {
-        alert("Failed to start VR video: " + err.message);
-        initialUI.style.display = 'block';
         loadingIndicator.classList.remove('visible');
-      });
-    });
+        updatePlayPauseIcon();
 
-    // Exit VR button click handler
-    exitBtn.addEventListener('click', () => {
+        // Request fullscreen on vrScene container for immersive experience
+        if (vrScene.requestFullscreen) {
+          vrScene.requestFullscreen().catch(() => {});
+        } else if (vrScene.webkitRequestFullscreen) {
+          vrScene.webkitRequestFullscreen().catch(() => {});
+        } else if (vrScene.msRequestFullscreen) {
+          vrScene.msRequestFullscreen().catch(() => {});
+        }
+      }).catch((err) => {
+        loadingIndicator.classList.remove('visible');
+        alert('Failed to play video. User interaction might be needed.');
+        console.error(err);
+      });
+    }
+
+    // Exit VR handler
+    function exitVR() {
       vrVideo.pause();
-      vrScene.classList.remove('visible');
-      vrInterface.classList.remove('visible');
-      vrControlsPanel.classList.remove('visible');
+      vrVideo.currentTime = 0;
+      vrScene.style.display = 'none';
+      vrInterface.style.display = 'none';
       initialUI.style.display = 'block';
-    });
+      vrInterface.classList.remove('visible');
+
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
 
     // Play/pause toggle
-    playPauseBtn.addEventListener('click', () => {
+    function togglePlayPause() {
       if (vrVideo.paused) {
         vrVideo.play();
       } else {
         vrVideo.pause();
       }
       updatePlayPauseIcon();
-    });
+    }
 
-    // Update play/pause icon on play/pause events
-    vrVideo.addEventListener('play', updatePlayPauseIcon);
-    vrVideo.addEventListener('pause', updatePlayPauseIcon);
+    function updatePlayPauseIcon() {
+      playPauseIcon.textContent = vrVideo.paused ? 'play_arrow' : 'pause';
+    }
 
-    // Update progress bar on video time update
-    vrVideo.addEventListener('timeupdate', () => {
-      if (!vrVideo.duration || isNaN(vrVideo.duration)) return;
-      const progressPercent = (vrVideo.currentTime / vrVideo.duration) * 100;
-      progressFill.style.width = progressPercent + '%';
-      progressBar.setAttribute('aria-valuenow', progressPercent.toFixed(0));
-      updateTimeDisplay();
-    });
+    // Rewind 10s
+    function rewind10() {
+      vrVideo.currentTime = Math.max(0, vrVideo.currentTime - 10);
+    }
 
-    // Seek video on progress bar click
-    progressBar.addEventListener('click', (e) => {
-      const rect = progressBar.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const newTime = (clickX / rect.width) * vrVideo.duration;
-      vrVideo.currentTime = newTime;
-    });
+    // Forward 10s
+    function forward10() {
+      vrVideo.currentTime = Math.min(vrVideo.duration, vrVideo.currentTime + 10);
+    }
 
-    // Volume controls
-    muteBtn.addEventListener('click', () => {
+    // Mute toggle
+    function toggleMute() {
       vrVideo.muted = !vrVideo.muted;
-      updateVolumeUI();
-    });
+      muteIcon.textContent = vrVideo.muted ? 'volume_off' : 'volume_up';
+      updateVolumeFill();
+    }
 
-    volumeSlider.addEventListener('input', () => {
-      vrVideo.volume = volumeSlider.value;
-      vrVideo.muted = volumeSlider.value == 0;
-      updateVolumeUI();
-    });
+    // Restart video
+    function restartVideo() {
+      vrVideo.currentTime = 0;
+      vrVideo.play();
+    }
 
-    // Fullscreen toggle
-    fullscreenBtn.addEventListener('click', () => {
+    // Update progress bar and time display
+    function updateProgress() {
+      if (vrVideo.duration) {
+        const percent = (vrVideo.currentTime / vrVideo.duration) * 100;
+        progressFill.style.width = percent + '%';
+        progressBar.setAttribute('aria-valuenow', Math.floor(percent));
+        timeDisplay.textContent = `${formatTime(vrVideo.currentTime)} / ${formatTime(vrVideo.duration)}`;
+      }
+      updatePlayPauseIcon();
+    }
+
+    // Seek video when clicking on progress bar
+    function seekVideo(event) {
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = event.clientX || event.touches[0].clientX;
+      const percent = Math.min(Math.max(0, clickX - rect.left), rect.width) / rect.width;
+      vrVideo.currentTime = percent * vrVideo.duration;
+    }
+
+    // Volume control
+    function setVolumeByPercent(percent) {
+      percent = Math.min(Math.max(0, percent), 1);
+      vrVideo.volume = percent;
+      vrVideo.muted = (percent === 0);
+      muteIcon.textContent = vrVideo.muted ? 'volume_off' : 'volume_up';
+      updateVolumeFill();
+    }
+
+    function updateVolumeFill() {
+      volumeFill.style.width = (vrVideo.muted ? 0 : vrVideo.volume * 100) + '%';
+      volumeSlider.setAttribute('aria-valuenow', Math.floor(vrVideo.volume * 100));
+    }
+
+    // Volume slider click and drag
+    function onVolumeClick(event) {
+      const rect = volumeSlider.getBoundingClientRect();
+      const clickX = event.clientX || event.touches[0].clientX;
+      const percent = (clickX - rect.left) / rect.width;
+      setVolumeByPercent(percent);
+    }
+
+    // Volume up/down buttons
+    function volumeUp() {
+      setVolumeByPercent(vrVideo.volume + 0.1);
+    }
+    function volumeDown() {
+      setVolumeByPercent(vrVideo.volume - 0.1);
+    }
+
+    // Fullscreen toggle for VR scene container
+    function toggleFullscreen() {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
+        if (vrScene.requestFullscreen) {
+          vrScene.requestFullscreen();
+        } else if (vrScene.webkitRequestFullscreen) {
+          vrScene.webkitRequestFullscreen();
+        } else if (vrScene.msRequestFullscreen) {
+          vrScene.msRequestFullscreen();
+        }
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
         }
+      }
+    }
+
+    // Event listeners
+
+    ['click', 'touchend', 'pointerup'].forEach(evt => {
+      enterVRBtn.addEventListener(evt, e => {
+        e.preventDefault();
+        enterVR();
+      });
+    });
+
+    exitVRBtn.addEventListener('click', exitVR);
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    rewindBtn.addEventListener('click', rewind10);
+    forwardBtn.addEventListener('click', forward10);
+    muteBtn.addEventListener('click', toggleMute);
+    restartBtn.addEventListener('click', restartVideo);
+    volumeDownBtn.addEventListener('click', volumeDown);
+    volumeUpBtn.addEventListener('click', volumeUp);
+
+    // Progress bar seek
+    progressBar.addEventListener('click', seekVideo);
+    progressBar.addEventListener('touchend', seekVideo);
+
+    // Volume slider click
+    volumeSlider.addEventListener('click', onVolumeClick);
+    volumeSlider.addEventListener('touchend', onVolumeClick);
+
+    // Update progress regularly
+    vrVideo.addEventListener('timeupdate', updateProgress);
+    vrVideo.addEventListener('play', updatePlayPauseIcon);
+    vrVideo.addEventListener('pause', updatePlayPauseIcon);
+
+    // Initialize volume fill bar
+    vrVideo.volume = 1;
+    updateVolumeFill();
+
+    // Accessibility: keyboard controls on progress bar and volume slider
+    progressBar.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        vrVideo.currentTime = Math.max(0, vrVideo.currentTime - 5);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        vrVideo.currentTime = Math.min(vrVideo.duration, vrVideo.currentTime + 5);
+        e.preventDefault();
+      }
+    });
+
+    volumeSlider.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        setVolumeByPercent(vrVideo.volume - 0.1);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        setVolumeByPercent(vrVideo.volume + 0.1);
+        e.preventDefault();
       }
     });
   </script>
-
 </body>
 </html>

@@ -43,12 +43,6 @@
       font-size: 1.5em;
       margin-bottom: 15px;
     }
-    .initialUI video {
-      width: 100%;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      margin-bottom: 20px;
-    }
     .initialUI button {
       background: linear-gradient(45deg, #6b48ff, #00ddeb);
       padding: 12px 30px;
@@ -82,12 +76,41 @@
       height: 200px; 
       border-radius: 10px;
       margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #previewPlayOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+    #previewPlayOverlay.hidden {
+      display: none;
+    }
+    #previewPlayOverlay:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .play-icon {
+      font-size: 48px;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(0, 0, 10, 0.5);
     }
   </style>
 </head>
 <body>
   <div class="initialUI" id="initialUI">
-    <h1>VR Video Experience</h1>
+    <h1>VR Video Experience (360 Preview)</h1>
     
     <div class="mini-aframe">
       <a-scene
@@ -103,6 +126,9 @@
         ></a-videosphere>
         <a-entity camera look-controls></a-entity>
       </a-scene>
+      <div id="previewPlayOverlay">
+        <span class="material-icons-round play-icon">play_circle_filled</span>
+      </div>
     </div>
 
     <button id="enterVRBtn">Enter VR mode</button>
@@ -257,6 +283,7 @@
     const previewVideoSource = document.getElementById('previewVideoSource');
     const cameraRig = document.getElementById('cameraRig');
     const vr3DControls = document.getElementById('vr3DControls');
+    const previewPlayOverlay = document.getElementById('previewPlayOverlay');
 
     const playPauseBtn3D = document.getElementById('playPauseBtn3D');
     const rewindBtn3D = document.getElementById('rewindBtn3D');
@@ -300,12 +327,18 @@
     }
 
     function startPreview() {
-        previewVideoSource.play().catch(e => console.error("Preview video playback blocked:", e));
+        previewVideoSource.play().then(() => {
+            previewPlayOverlay.classList.add('hidden');
+        }).catch(e => {
+            console.error("Preview video playback blocked:", e);
+            previewPlayOverlay.classList.remove('hidden');
+        });
     }
 
     function stopPreview() {
         previewVideoSource.pause();
         previewVideoSource.currentTime = 0;
+        previewPlayOverlay.classList.remove('hidden'); 
     }
 
     function enterVR() {
@@ -316,10 +349,10 @@
       vrVideo.muted = false;
       vrVideo.currentTime = 0;
       vrVideo.play().then(() => {
-        // Start VR mode directly if preferred, or rely on the A-Frame button
+        vrScene.enterVR();
       }).catch((err) => {
         console.error('Video Playback Failed on Enter VR. Permission or source issue.', err);
-        alert('Video must be played with user interaction first. Tap PLAY or the VR button.');
+        alert('VR Launch Failed. Check browser permissions (gyroscope/VR mode) or use the headset icon.');
         initialUI.classList.remove('hidden');
         vrScene.style.display = 'none';
         startPreview(); 
@@ -339,13 +372,21 @@
       startPreview();
     }
 
+    // Initialize/Setup Handlers
+    
+    // Attempt to start preview video playback when the user taps the overlay
+    previewPlayOverlay.addEventListener('click', startPreview);
+    previewPlayOverlay.addEventListener('touchend', startPreview);
+
     vrScene.addEventListener('loaded', () => {
         vrVideo.pause();
         vrVideo.muted = true;
     });
 
+    // We start the preview when the mini-scene is ready, but it will be blocked until user interaction
     previewScene.addEventListener('loaded', () => {
-        startPreview();
+        // Attempting to play immediately to load video assets, but browser will pause it.
+        startPreview(); 
     });
 
     vrScene.addEventListener('enter-vr', () => {
